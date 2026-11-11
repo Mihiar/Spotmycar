@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpotMyCar : retrouvez votre voiture, même sans GPS</title>
+<meta name="description" content="SpotMyCar note votre place de parking tout seul quand votre téléphone quitte le Bluetooth de la voiture. Étage, photo, itinéraire. Gratuit, sans compte, sans publicité.">
+<meta name="theme-color" content="#1F4FD8">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --concrete: #E3E6EA;
+    --concrete-deep: #CDD2D9;
+    --paint-white: #FAFAF7;
+    --sign-blue: #1F4FD8;
+    --sign-blue-deep: #173BA6;
+    --pin-amber: #F5A30B;
+    --ink: #142033;
+    --ink-soft: #46536A;
+    --display: "Roboto Condensed", "Arial Narrow", "Helvetica Neue Condensed", "Liberation Sans Narrow", sans-serif-condensed, system-ui, sans-serif;
+    --body: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Arabic", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--concrete);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 1.0625rem;
+    line-height: 1.55;
+  }
+  a { color: var(--sign-blue); }
+  a:focus-visible, button:focus-visible { outline: 3px solid var(--pin-amber); outline-offset: 3px; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+
+  /* ── En-tête ─────────────────────────────── */
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 0; }
+  .brand { display: flex; align-items: center; gap: 8px; font-family: var(--display); font-stretch: condensed; font-weight: 700; font-size: 1.5rem; letter-spacing: 0.01em; color: var(--ink); text-decoration: none; }
+  .brand svg { width: 26px; height: 26px; flex: none; }
+  .langs { display: flex; gap: 4px; }
+  .langs button {
+    font: inherit; font-size: 0.95rem; font-weight: 600; color: var(--ink-soft);
+    background: none; border: 0; border-radius: 8px; padding: 8px 10px; min-height: 40px; cursor: pointer;
+  }
+  .langs button[aria-pressed="true"] { background: var(--ink); color: var(--paint-white); }
+
+  /* ── Le pilier (hero) ────────────────────── */
+  .pillar { background: var(--paint-white); border-radius: 6px; overflow: hidden; box-shadow: 0 1px 0 var(--concrete-deep), 0 18px 40px -22px rgba(20, 32, 51, 0.45); }
+  .band {
+    position: relative; background: var(--sign-blue); color: var(--paint-white);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: clamp(14px, 3vw, 28px) clamp(18px, 5vw, 48px) 10px; min-height: clamp(170px, 42vw, 300px); overflow: hidden;
+  }
+  .band::after { content: ""; position: absolute; inset-inline: 0; bottom: 0; height: 10px; background: var(--sign-blue-deep); }
+  .level {
+    font-family: var(--display); font-stretch: condensed; font-weight: 700; line-height: 0.9;
+    font-size: clamp(8.5rem, 38vw, 18rem); letter-spacing: -0.03em; margin: 0; direction: ltr;
+  }
+  .drop { position: relative; width: clamp(96px, 24vw, 170px); aspect-ratio: 1; flex: none; margin-inline-end: clamp(0px, 3vw, 40px); }
+  .drop .ring { position: absolute; inset: 0; border: 4px solid var(--paint-white); border-radius: 50%; opacity: 0; transform: scale(0.2); }
+  .drop svg { position: absolute; inset: 12%; width: 76%; height: 76%; }
+  @media (prefers-reduced-motion: no-preference) {
+    .drop svg { animation: pin-fall 0.75s cubic-bezier(0.3, 1.5, 0.5, 1) 0.25s both; }
+    .drop .ring { animation: ripple 0.9s ease-out 0.8s both; }
+    .drop .ring + .ring { animation-delay: 1.02s; }
+  }
+  @keyframes pin-fall { from { transform: translateY(-190%); opacity: 0; } 55% { opacity: 1; } to { transform: translateY(0); opacity: 1; } }
+  @keyframes ripple { from { transform: scale(0.2); opacity: 0.85; } to { transform: scale(1.5); opacity: 0; } }
+
+  .pitch { padding: clamp(24px, 5vw, 48px) clamp(18px, 5vw, 48px) clamp(28px, 5vw, 52px); }
+  h1 {
+    font-family: var(--display); font-stretch: condensed; font-weight: 700;
+    font-size: clamp(2.5rem, 9vw, 4.6rem); line-height: 0.98; letter-spacing: -0.01em; margin: 0 0 18px; max-width: 14ch;
+  }
+  .lead { font-size: clamp(1.1rem, 2.6vw, 1.3rem); color: var(--ink-soft); max-width: 46ch; margin: 0 0 26px; }
+  .cta {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    background: var(--pin-amber); color: var(--ink); text-decoration: none;
+    font-family: var(--display); font-stretch: condensed; font-weight: 700; font-size: clamp(1.2rem, 5.2vw, 1.45rem);
+    padding: 16px clamp(14px, 4vw, 28px); min-height: 64px; border-radius: 6px; border: 0; cursor: pointer;
+    box-shadow: 0 5px 0 #B87806;
+  }
+  @media (max-width: 520px) { .pitch .cta { display: flex; width: 100%; } }
+  .cta:active { transform: translateY(3px); box-shadow: 0 2px 0 #B87806; }
+  .cta svg { width: 26px; height: 26px; flex: none; }
+  .cta-note { margin: 16px 0 0; color: var(--ink-soft); font-size: 0.98rem; }
+  .pending { margin: 10px 0 0; font-size: 0.92rem; color: var(--ink-soft); }
+
+  /* ── Sections ────────────────────────────── */
+  section { padding: clamp(40px, 8vw, 80px) 0 0; }
+  h2 { font-family: var(--display); font-stretch: condensed; font-weight: 700; font-size: clamp(1.9rem, 5.4vw, 2.8rem); line-height: 1.05; margin: 0 0 20px; }
+  .prose { max-width: 60ch; margin: 0; color: var(--ink-soft); font-size: 1.1rem; }
+  .prose + .prose { margin-top: 14px; }
+
+  /* Les trois moments : des places de parking, séparées par des lignes peintes. */
+  .bays { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; }
+  .bays li { padding: 22px 0 24px; border-top: 5px solid var(--paint-white); display: grid; grid-template-columns: auto 1fr; column-gap: 18px; align-items: start; }
+  .bays li:last-child { border-bottom: 5px solid var(--paint-white); }
+  .bays .num { font-family: var(--display); font-stretch: condensed; font-weight: 700; font-size: 4.2rem; line-height: 0.85; color: var(--sign-blue); min-width: 0.7em; }
+  .bays h3 { font-size: 1.22rem; margin: 0 0 6px; line-height: 1.25; }
+  .bays p { margin: 0; color: var(--ink-soft); }
+  @media (min-width: 820px) {
+    .bays { grid-template-columns: repeat(3, 1fr); }
+    .bays li { display: block; padding: 26px 28px 30px; border-top: 0; border-inline-start: 5px solid var(--paint-white); }
+    .bays li:last-child { border-bottom: 0; border-inline-end: 5px solid var(--paint-white); }
+    .bays .num { display: block; margin-bottom: 14px; font-size: 5.4rem; }
+  }
+
+  .steps { margin: 0; padding-inline-start: 1.3em; max-width: 60ch; color: var(--ink-soft); font-size: 1.1rem; }
+  .steps li { padding-inline-start: 6px; margin-bottom: 10px; }
+  .steps li::marker { font-family: var(--display); font-weight: 700; color: var(--sign-blue); }
+
+  .testers { background: var(--ink); color: var(--paint-white); border-radius: 6px; padding: clamp(24px, 5vw, 44px); }
+  .testers h2 { color: var(--paint-white); }
+  .testers .prose { color: #C6CEDC; }
+  .testers .cta { margin-top: 24px; }
+
+  footer { margin-top: clamp(48px, 9vw, 90px); padding: 26px 0 40px; border-top: 5px solid var(--paint-white); color: var(--ink-soft); font-size: 0.98rem; display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+  footer nav { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <a class="brand" href="./" aria-label="SpotMyCar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#1F4FD8" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.6" fill="#F5A30B"/></svg>
+      SpotMyCar
+    </a>
+    <div class="langs" role="group" aria-label="Langue / Language / اللغة">
+      <button type="button" data-lang="fr" aria-pressed="true">FR</button>
+      <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      <button type="button" data-lang="ar" aria-pressed="false" lang="ar">عربي</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="pillar">
+      <div class="band" aria-hidden="true">
+        <p class="level">&minus;2</p>
+        <div class="drop">
+          <span class="ring"></span><span class="ring"></span>
+          <svg viewBox="0 0 24 24"><path fill="#F5A30B" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.6" fill="#FAFAF7"/></svg>
+        </div>
+      </div>
+      <div class="pitch">
+        <h1 data-i18n="h1">Retrouvez votre voiture. Même sans GPS.</h1>
+        <p class="lead" data-i18n="lead">SpotMyCar note votre place de parking tout seul, dès que votre téléphone quitte le Bluetooth de la voiture. Au retour, l'étage, la photo et l'itinéraire vous attendent.</p>
+        <a class="cta" id="download" href="#installer">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg>
+          <span data-i18n="cta">Télécharger pour Android</span>
+        </a>
+        <p class="cta-note" data-i18n="ctaNote">Gratuit, sans compte, sans publicité. Android 8 ou plus récent.</p>
+        <p class="pending" id="pending" data-i18n="pending">Le téléchargement s'activera à la publication de la première version.</p>
+      </div>
+    </div>
+
+    <section>
+      <h2 data-i18n="howTitle">Trois moments, aucun effort</h2>
+      <ol class="bays">
+        <li><span class="num" aria-hidden="true">1</span><div><h3 data-i18n="how1t">Vous vous garez</h3><p data-i18n="how1">Vous coupez le contact, le téléphone quitte le Bluetooth de la voiture&nbsp;: la place est notée. Vous n'avez rien touché.</p></div></li>
+        <li><span class="num" aria-hidden="true">2</span><div><h3 data-i18n="how2t">Vous ajoutez un repère, si vous voulez</h3><p data-i18n="how2">Une photo du pilier, le numéro de l'étage, une note. Dix secondes, et c'est facultatif.</p></div></li>
+        <li><span class="num" aria-hidden="true">3</span><div><h3 data-i18n="how3t">Vous revenez</h3><p data-i18n="how3">L'étage s'affiche en grand, la photo aussi. En extérieur, un bouton lance l'itinéraire à pied.</p></div></li>
+      </ol>
+    </section>
+
+    <section>
+      <h2 data-i18n="undergroundTitle">Pensé pour le sous-sol</h2>
+      <p class="prose" data-i18n="underground1">Dans un parking couvert, le GPS ne passe pas, et la plupart des applications s'arrêtent là.</p>
+      <p class="prose" data-i18n="underground2">SpotMyCar fait l'inverse&nbsp;: l'étage, la zone et la photo sont le fonctionnement normal. Le GPS est un bonus quand il existe.</p>
+    </section>
+
+    <section>
+      <h2 data-i18n="privacyTitle">Vos trajets ne regardent que vous</h2>
+      <p class="prose" data-i18n="privacy1">Pas de compte, pas de serveur, pas de publicité. La position, la photo et les notes restent sur votre téléphone, et s'effacent quand vous retrouvez votre voiture.</p>
+      <p class="prose"><a href="privacy.html" data-i18n="privacyLink">Lire la politique de confidentialité</a></p>
+    </section>
+
+    <section id="installer">
+      <h2 data-i18n="installTitle">Installer en trois gestes</h2>
+      <ol class="steps">
+        <li data-i18n="install1">Touchez «&nbsp;Télécharger pour Android&nbsp;».</li>
+        <li data-i18n="install2">Ouvrez le fichier téléchargé. Android demande d'autoriser l'installation depuis votre navigateur&nbsp;: acceptez.</li>
+        <li data-i18n="install3">Ouvrez SpotMyCar et touchez «&nbsp;Garer ici&nbsp;».</li>
+      </ol>
+      <p class="prose" style="margin-top:18px" data-i18n="installNote">SpotMyCar arrive bientôt sur Google Play. En attendant, ce fichier est la version officielle.</p>
+    </section>
+
+    <section id="testeurs" hidden>
+      <div class="testers">
+        <h2 data-i18n="testTitle">Devenez l'un des 12 premiers testeurs</h2>
+        <p class="prose" data-i18n="test1">Google demande 12 testeurs pendant 14 jours avant d'accepter une nouvelle application sur Google Play. Vous avez un téléphone Android&nbsp;? Deux minutes suffisent pour nous aider.</p>
+        <a class="cta" id="tester-link" href="#" data-i18n="testCta">Je veux tester</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span data-i18n="footer">SpotMyCar, conçu au Maroc.</span>
+    <nav>
+      <a href="privacy.html" data-i18n="footerPrivacy">Confidentialité</a>
+      <a id="contact" href="#" hidden data-i18n="footerContact">Contact</a>
+    </nav>
+  </footer>
+</div>
+
+<script>
+  // ── À régler une seule fois ────────────────────────────────────────────
+  const CONFIG = {
+    repo: "",          // ex. "monpseudo/spotmycar" : active le bouton de téléchargement
+    contactEmail: "",  // adresse publique de contact
+    testerLink: ""     // lien d'inscription des testeurs (affiche la section)
+  };
+
+  const TEXT = {
+    fr: null, // le français est déjà dans la page
+    en: {
+      title: "SpotMyCar: find your car, even without GPS",
+      h1: "Find your car. Even without GPS.",
+      lead: "SpotMyCar saves your parking spot by itself, the moment your phone leaves the car's Bluetooth. When you come back, the floor, the photo and the route are waiting.",
+      cta: "Download for Android",
+      ctaNote: "Free, no account, no ads. Android 8 or newer.",
+      pending: "The download goes live when the first version is published.",
+      howTitle: "Three moments, no effort",
+      how1t: "You park", how1: "You switch off the engine, your phone leaves the car's Bluetooth: the spot is saved. You touched nothing.",
+      how2t: "You add a landmark, if you like", how2: "A photo of the pillar, the floor number, a note. Ten seconds, and it's optional.",
+      how3t: "You come back", how3: "The floor shows up in big type, and so does the photo. Outdoors, one button starts the walking route.",
+      undergroundTitle: "Built for underground car parks",
+      underground1: "In a covered car park, GPS doesn't get through, and most apps stop there.",
+      underground2: "SpotMyCar does the opposite: floor, zone and photo are the normal way it works. GPS is a bonus when there is some.",
+      privacyTitle: "Your trips are your business",
+      privacy1: "No account, no server, no ads. Location, photo and notes stay on your phone, and are erased when you find your car.",
+      privacyLink: "Read the privacy policy",
+      installTitle: "Install in three steps",
+      install1: "Tap “Download for Android”.",
+      install2: "Open the downloaded file. Android asks you to allow installing from your browser: accept.",
+      install3: "Open SpotMyCar and tap “Park here”.",
+      installNote: "SpotMyCar is coming to Google Play soon. Until then, this file is the official version.",
+      testTitle: "Be one of the first 12 testers",
+      test1: "Google requires 12 testers for 14 days before it accepts a new app on Google Play. Got an Android phone? Two minutes is all it takes to help.",
+      testCta: "I want to test",
+      footer: "SpotMyCar, made in Morocco.", footerPrivacy: "Privacy", footerContact: "Contact"
+    },
+    ar: {
+      title: "SpotMyCar: اعثر على سيارتك حتى بدون GPS",
+      h1: "اعثر على سيارتك. حتى بدون GPS.",
+      lead: "يحفظ SpotMyCar مكان ركن سيارتك تلقائياً، لحظة انفصال هاتفك عن بلوتوث السيارة. وعند عودتك تجد الطابق والصورة والمسار في انتظارك.",
+      cta: "تنزيل لأندرويد",
+      ctaNote: "مجاني، بلا حساب، بلا إعلانات. أندرويد 8 أو أحدث.",
+      pending: "سيُفعَّل التنزيل عند نشر الإصدار الأول.",
+      howTitle: "ثلاث لحظات، بلا أي مجهود",
+      how1t: "تركن سيارتك", how1: "تطفئ المحرك فينفصل الهاتف عن بلوتوث السيارة: تم حفظ المكان. لم تلمس شيئاً.",
+      how2t: "تضيف علامة، إن أردت", how2: "صورة للعمود، رقم الطابق، ملاحظة. عشر ثوانٍ فقط، وهي اختيارية.",
+      how3t: "تعود", how3: "يظهر الطابق بخط كبير، والصورة كذلك. وفي الهواء الطلق، زر واحد يبدأ المسار مشياً.",
+      undergroundTitle: "مصمَّم للمواقف تحت الأرض",
+      underground1: "في المواقف المغطاة لا تصل إشارة GPS، وعندها تتوقف معظم التطبيقات.",
+      underground2: "SpotMyCar يفعل العكس: الطابق والمنطقة والصورة هي طريقة عمله العادية، وGPS إضافة حين يتوفر.",
+      privacyTitle: "تنقلاتك شأنك وحدك",
+      privacy1: "بلا حساب، بلا خادم، بلا إعلانات. الموقع والصورة والملاحظات تبقى على هاتفك، وتُمحى عندما تجد سيارتك.",
+      privacyLink: "قراءة سياسة الخصوصية",
+      installTitle: "التثبيت في ثلاث خطوات",
+      install1: "اضغط «تنزيل لأندرويد».",
+      install2: "افتح الملف الذي تم تنزيله. سيطلب أندرويد السماح بالتثبيت من متصفحك: وافق.",
+      install3: "افتح SpotMyCar واضغط «اركن هنا».",
+      installNote: "SpotMyCar قادم قريباً إلى Google Play. وإلى ذلك الحين، هذا الملف هو النسخة الرسمية.",
+      testTitle: "كن من أوائل المختبرين الاثني عشر",
+      test1: "تشترط Google وجود 12 مختبراً لمدة 14 يوماً قبل قبول تطبيق جديد على Google Play. لديك هاتف أندرويد؟ دقيقتان تكفيان لمساعدتنا.",
+      testCta: "أريد أن أجرّب",
+      footer: "SpotMyCar، صُمِّم في المغرب.", footerPrivacy: "الخصوصية", footerContact: "اتصل بنا"
+    }
+  };
+
+  // Le français sert de référence : on le lit dans la page au chargement.
+  const nodes = Array.from(document.querySelectorAll("[data-i18n]"));
+  TEXT.fr = { title: document.title };
+  nodes.forEach(function (node) { TEXT.fr[node.dataset.i18n] = node.textContent; });
+
+  function setLanguage(lang) {
+    const table = TEXT[lang] || TEXT.fr;
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+    document.title = table.title || TEXT.fr.title;
+    nodes.forEach(function (node) { node.textContent = table[node.dataset.i18n] || TEXT.fr[node.dataset.i18n]; });
+    document.querySelectorAll(".langs button").forEach(function (button) {
+      button.setAttribute("aria-pressed", String(button.dataset.lang === lang));
+    });
+    try { localStorage.setItem("spotmycar-lang", lang); } catch (error) { /* stockage indisponible */ }
+  }
+
+  document.querySelectorAll(".langs button").forEach(function (button) {
+    button.addEventListener("click", function () { setLanguage(button.dataset.lang); });
+  });
+
+  let initial = "fr";
+  try { initial = localStorage.getItem("spotmycar-lang") || ""; } catch (error) { initial = ""; }
+  if (!initial) {
+    const browser = (navigator.language || "fr").slice(0, 2).toLowerCase();
+    initial = TEXT[browser] ? browser : "fr";
+  }
+  if (initial !== "fr") setLanguage(initial);
+
+  // Bouton de téléchargement, contact, testeurs.
+  if (CONFIG.repo) {
+    document.getElementById("download").href = "https://github.com/" + CONFIG.repo + "/releases/latest/download/SpotMyCar.apk";
+    document.getElementById("pending").hidden = true;
+  }
+  if (CONFIG.contactEmail) {
+    const contact = document.getElementById("contact");
+    contact.href = "mailto:" + CONFIG.contactEmail;
+    contact.hidden = false;
+  }
+  if (CONFIG.testerLink) {
+    document.getElementById("tester-link").href = CONFIG.testerLink;
+    document.getElementById("testeurs").hidden = false;
+  }
+</script>
+</body>
+</html>
