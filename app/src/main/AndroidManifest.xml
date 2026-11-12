@@ -14,8 +14,11 @@
         android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
-    <!-- Notification de confirmation après un enregistrement automatique. -->
+    <!-- Notifications : confirmation d'enregistrement automatique et alertes de stationnement. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Reprogrammer les alertes après un redémarrage du téléphone. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- Rien n'est obligatoire : l'app reste installable sur tous les téléphones. -->
     <uses-feature
@@ -66,6 +69,16 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Alertes de stationnement (fermeture, durée, gratuité) et reprise après redémarrage. -->
+        <receiver
+            android:name=".alerts.AlertReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
 

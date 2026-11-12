@@ -2,13 +2,13 @@ package app.spotmycar.android.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -20,62 +20,112 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import app.spotmycar.android.data.AppSettings
+import app.spotmycar.android.data.HistoryStore
 import app.spotmycar.android.data.ParkingSpot
 import app.spotmycar.android.data.ParkingStore
 import app.spotmycar.android.location.LocationFetcher
+import app.spotmycar.android.location.PlaceNamer
+import app.spotmycar.android.ui.theme.Smc
 import kotlinx.coroutines.launch
 
-/** Écran ouvert par-dessus l'écran principal. */
-private enum class Overlay { NONE, DETAILS, SETTINGS }
+/** Les écrans de l'app (comme dans le prototype 3a). */
+enum class Screen { ONBOARDING, HOME, HISTORY, ALERTS, SAVE, GUIDE, SETTINGS }
 
-/** Les quatre écrans de l'app. */
-private enum class Screen { PARK, DETAILS, FIND, SETTINGS }
+/** Les trois onglets du bas. */
+private val TAB_SCREENS = setOf(Screen.HOME, Screen.HISTORY, Screen.ALERTS)
 
 /**
  * Chef d'orchestre : décide quel écran montrer.
- * - pas de place notée  -> « Garer ici »
- * - place notée         -> « Ma voiture »
- * - par-dessus          -> détails (étage, photo) ou réglages
+ * Introduction (une fois) → Ma voiture / Historique / Alertes (onglets)
+ * → par-dessus : Nouvelle place, Retour à la voiture, Réglages, photo, partage.
  */
 @Composable
 fun SpotMyCarRoot(
     resumeTick: Int,
     openDetailsRequest: Boolean,
     onOpenDetailsConsumed: () -> Unit,
+    openGuideRequest: Boolean,
+    onOpenGuideConsumed: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val settings = remember { AppSettings(context) }
     val spot by ParkingStore.spot.collectAsState()
-    var overlay by rememberSaveable { mutableStateOf(Overlay.NONE) }
+    val history by HistoryStore.entries.collectAsState()
+
+    var screen by rememberSaveable {
+        mutableStateOf(if (settings.onboardingDone) Screen.HOME else Screen.ONBOARDING)
+    }
+    /** Vrai quand l'écran « Nouvelle place » vient d'une place créée à l'instant. */
+    var saveIsNew by rememberSaveable { mutableStateOf(false) }
     var locating by remember { mutableStateOf(false) }
+    var photoOpen by rememberSaveable { mutableStateOf(false) }
+    var shareOpen by rememberSaveable { mutableStateOf(false) }
 
     // Garde la dernière place affichée, pour que l'écran ne se vide pas pendant le fondu de sortie.
     val lastSpot = remember { arrayOfNulls<ParkingSpot>(1) }
     spot?.let { lastSpot[0] = it }
     val shownSpot = spot ?: lastSpot[0]
 
-    // Arrivée depuis la notification « Place enregistrée » : on ouvre directement les détails.
+    // Arrivée depuis la notification « Place enregistrée » : on ouvre l'écran de la place.
     LaunchedEffect(openDetailsRequest) {
         if (openDetailsRequest) {
-            if (ParkingStore.current(context) != null) overlay = Overlay.DETAILS
+            if (ParkingStore.current(context) != null) {
+                saveIsNew = false
+                screen = Screen.SAVE
+            }
             onOpenDetailsConsumed()
         }
     }
-
-    BackHandler(enabled = overlay != Overlay.NONE) { overlay = Overlay.NONE }
-
-    // Plus de place notée : l'écran des détails n'a plus lieu d'être.
-    LaunchedEffect(spot) {
-        if (spot == null && overlay == Overlay.DETAILS) overlay = Overlay.NONE
+    // Arrivée depuis une alerte : directement le guidage.
+    LaunchedEffect(openGuideRequest) {
+        if (openGuideRequest) {
+            if (ParkingStore.current(context) != null) screen = Screen.GUIDE
+            onOpenGuideConsumed()
+        }
     }
 
+    // Plus de place notée : les écrans qui en dépendent n'ont plus lieu d'être.
+    LaunchedEffect(spot) {
+        if (spot == null && (screen == Screen.SAVE || screen == Screen.GUIDE)) screen = Screen.HOME
+        if (spot == null) {
+            photoOpen = false
+            shareOpen = false
+        }
+    }
+
+    // Nom du lieu (« Carrefour Anfa ») : trouvé après coup, quand Internet le permet.
+    LaunchedEffect(spot?.savedAt, spot?.hasCoordinates) {
+        val current = spot ?: return@LaunchedEffect
+        val lat = current.latitude ?: return@LaunchedEffect
+        val lng = current.longitude ?: return@LaunchedEffect
+        if (current.placeName.isNotBlank()) return@LaunchedEffect
+        val name = PlaceNamer.nameFor(context, lat, lng) ?: return@LaunchedEffect
+        ParkingStore.update(context) { if (it.savedAt == current.savedAt) it.copy(placeName = name) else it }
+    }
+
+    val goHome: () -> Unit = {
+        photoOpen = false
+        shareOpen = false
+        screen = Screen.HOME
+    }
+
+    BackHandler(enabled = photoOpen || shareOpen || (screen != Screen.HOME && screen != Screen.ONBOARDING)) {
+        when {
+            photoOpen -> photoOpen = false
+            shareOpen -> shareOpen = false
+            else -> screen = Screen.HOME
+        }
+    }
+
+    // « Enregistrer ma place » : la place est notée tout de suite, la position arrive ensuite.
     val onParked: () -> Unit = {
-        // 1. On note la place tout de suite : l'utilisateur n'attend jamais le GPS.
         val newSpot = ParkingSpot(savedAt = System.currentTimeMillis())
         ParkingStore.replace(context, newSpot)
-        overlay = Overlay.DETAILS
+        saveIsNew = true
+        screen = Screen.SAVE
 
-        // 2. La position arrive ensuite, si le téléphone en trouve une.
         if (LocationFetcher.hasForegroundPermission(context)) {
             locating = true
             scope.launch {
@@ -90,53 +140,105 @@ fun SpotMyCarRoot(
         }
     }
 
-    val screen = when {
-        overlay == Overlay.SETTINGS -> Screen.SETTINGS
-        spot == null -> Screen.PARK
-        overlay == Overlay.DETAILS -> Screen.DETAILS
-        else -> Screen.FIND
-    }
-
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Box(
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Smc.Background),
+    ) {
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing),
         ) {
-            Crossfade(targetState = screen, label = "screen") { current ->
-                when (current) {
-                    Screen.PARK -> ParkScreen(
-                        resumeTick = resumeTick,
-                        onParked = onParked,
-                        onOpenSettings = { overlay = Overlay.SETTINGS },
-                    )
-
-                    Screen.DETAILS -> shownSpot?.let { parked ->
-                        DetailsScreen(
-                            spot = parked,
-                            locating = locating,
-                            onDone = { overlay = Overlay.NONE },
+            Box(modifier = Modifier.weight(1f)) {
+                Crossfade(targetState = screen, label = "screen") { current ->
+                    when (current) {
+                        Screen.ONBOARDING -> OnboardingScreen(
+                            onFinished = {
+                                settings.onboardingDone = true
+                                screen = Screen.HOME
+                            },
                         )
-                    }
 
-                    Screen.FIND -> shownSpot?.let { parked ->
-                        FindScreen(
-                            spot = parked,
-                            onEdit = { overlay = Overlay.DETAILS },
-                            onOpenSettings = { overlay = Overlay.SETTINGS },
-                            onFound = {
-                                overlay = Overlay.NONE
-                                ParkingStore.clear(context)
+                        Screen.HOME -> HomeScreen(
+                            spot = spot,
+                            locating = locating,
+                            history = history,
+                            resumeTick = resumeTick,
+                            onParked = onParked,
+                            onGuide = { screen = Screen.GUIDE },
+                            onEdit = {
+                                saveIsNew = false
+                                screen = Screen.SAVE
+                            },
+                            onOpenPhoto = { photoOpen = true },
+                            onShare = { shareOpen = true },
+                            onOpenSettings = { screen = Screen.SETTINGS },
+                            onOpenHistory = { screen = Screen.HISTORY },
+                        )
+
+                        Screen.HISTORY -> HistoryScreen(spot = spot, history = history)
+
+                        Screen.ALERTS -> AlertsScreen(
+                            spot = spot,
+                            resumeTick = resumeTick,
+                            onOpenSettings = { screen = Screen.SETTINGS },
+                        )
+
+                        Screen.SAVE -> shownSpot?.let { parked ->
+                            SaveScreen(
+                                spot = parked,
+                                isNew = saveIsNew,
+                                locating = locating,
+                                onCancel = { discardNew ->
+                                    if (discardNew) ParkingStore.discard(context)
+                                    goHome()
+                                },
+                                onSaved = goHome,
+                            )
+                        }
+
+                        Screen.GUIDE -> shownSpot?.let { parked ->
+                            GuideScreen(
+                                spot = parked,
+                                onBack = goHome,
+                                onOpenPhoto = { photoOpen = true },
+                                onArrived = {
+                                    ParkingStore.finish(context)
+                                    goHome()
+                                },
+                            )
+                        }
+
+                        Screen.SETTINGS -> SettingsScreen(
+                            resumeTick = resumeTick,
+                            onBack = goHome,
+                            onReplayIntro = {
+                                settings.onboardingDone = false
+                                screen = Screen.ONBOARDING
                             },
                         )
                     }
-
-                    Screen.SETTINGS -> SettingsScreen(
-                        resumeTick = resumeTick,
-                        onBack = { overlay = Overlay.NONE },
-                    )
                 }
             }
+            if (screen in TAB_SCREENS) {
+                BottomTabs(
+                    current = screen,
+                    onSelect = { target ->
+                        photoOpen = false
+                        shareOpen = false
+                        screen = target
+                    },
+                )
+            }
+        }
+
+        val overlaySpot = shownSpot
+        if (photoOpen && overlaySpot != null) {
+            PhotoViewer(spot = overlaySpot, onClose = { photoOpen = false })
+        }
+        if (shareOpen && overlaySpot != null) {
+            ShareSheet(spot = overlaySpot, onClose = { shareOpen = false })
         }
     }
 }

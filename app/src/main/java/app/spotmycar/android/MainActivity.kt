@@ -1,12 +1,15 @@
 package app.spotmycar.android
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import app.spotmycar.android.data.HistoryStore
 import app.spotmycar.android.data.ParkingStore
 import app.spotmycar.android.notify.Notifier
 import app.spotmycar.android.ui.SpotMyCarRoot
@@ -20,10 +23,18 @@ class MainActivity : ComponentActivity() {
     /** Vrai quand on arrive depuis la notification « Place enregistrée ». */
     private val openDetailsRequest = mutableStateOf(false)
 
+    /** Vrai quand on arrive depuis une alerte (fermeture, durée…). */
+    private val openGuideRequest = mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
+        // Thème toujours sombre : barres système claires sur fond graphite.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+        )
         super.onCreate(savedInstanceState)
         ParkingStore.ensureLoaded(this)
+        HistoryStore.ensureLoaded(this)
         if (savedInstanceState == null) handleIntent(intent)
 
         setContent {
@@ -32,6 +43,8 @@ class MainActivity : ComponentActivity() {
                     resumeTick = resumeTick.intValue,
                     openDetailsRequest = openDetailsRequest.value,
                     onOpenDetailsConsumed = { openDetailsRequest.value = false },
+                    openGuideRequest = openGuideRequest.value,
+                    onOpenGuideConsumed = { openGuideRequest.value = false },
                 )
             }
         }
@@ -51,6 +64,9 @@ class MainActivity : ComponentActivity() {
     private fun handleIntent(intent: Intent?) {
         if (intent?.getBooleanExtra(Notifier.EXTRA_OPEN_DETAILS, false) == true) {
             openDetailsRequest.value = true
+        }
+        if (intent?.getBooleanExtra(Notifier.EXTRA_OPEN_GUIDE, false) == true) {
+            openGuideRequest.value = true
         }
     }
 }

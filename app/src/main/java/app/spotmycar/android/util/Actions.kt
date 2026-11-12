@@ -43,26 +43,28 @@ object Actions {
         return attempts.any { start(context, it) }
     }
 
-    /** Partage la place (lien, étage, note, photo) avec la personne de son choix. */
-    fun share(context: Context, spot: ParkingSpot) {
+    /** Le message envoyé à un proche : lien de la carte, niveau / zone / place, repère. */
+    fun shareText(context: Context, spot: ParkingSpot): String {
         val link = mapsLink(spot)
-        val text = buildString {
+        return buildString {
             if (link != null) {
                 append(context.getString(R.string.share_with_coords, link))
             } else {
                 append(context.getString(R.string.share_without_coords))
             }
-            if (spot.floor.isNotBlank()) {
-                append('\n').append(context.getString(R.string.share_floor, spot.floor))
-            }
+            val garage = SpotText.garageLine(context, spot)
+            if (garage.isNotBlank()) append('\n').append(garage)
             if (spot.note.isNotBlank()) {
                 append('\n').append(context.getString(R.string.share_note, spot.note))
             }
         }
+    }
 
+    /** Partage la place (texte et photo) avec l'application de son choix. */
+    fun share(context: Context, spot: ParkingSpot) {
         val send = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, text)
+            putExtra(Intent.EXTRA_TEXT, shareText(context, spot))
         }
         val photo = spot.photoPath?.let { File(it) }
         if (photo != null && photo.exists()) {
@@ -78,6 +80,22 @@ object Actions {
         }
         start(context, Intent.createChooser(send, context.getString(R.string.share_chooser)))
     }
+
+    /** Envoie le message par WhatsApp (ou WhatsApp Business). @return faux si absent. */
+    fun shareToWhatsApp(context: Context, text: String): Boolean =
+        listOf("com.whatsapp", "com.whatsapp.w4b").any { pkg ->
+            start(
+                context,
+                Intent(Intent.ACTION_SEND)
+                    .setType("text/plain")
+                    .putExtra(Intent.EXTRA_TEXT, text)
+                    .setPackage(pkg),
+            )
+        }
+
+    /** Ouvre un SMS prêt à envoyer. */
+    fun shareBySms(context: Context, text: String): Boolean =
+        start(context, Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:")).putExtra("sms_body", text))
 
     fun openUrl(context: Context, url: String): Boolean =
         start(context, Intent(Intent.ACTION_VIEW, Uri.parse(url)))

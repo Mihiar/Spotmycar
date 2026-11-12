@@ -4,7 +4,7 @@ Retrouvez votre voiture, même sans GPS.
 
 SpotMyCar est une application Android qui note toute seule l'endroit où vous êtes
 garé, dès que votre téléphone quitte le Bluetooth de la voiture. En parking
-souterrain, où le GPS ne passe pas, l'étage, la zone et une photo prennent le relais.
+souterrain, où le GPS ne passe pas, le niveau, la zone, la place et une photo prennent le relais.
 
 - Gratuit, sans compte, sans publicité
 - Tout reste sur le téléphone : aucun serveur

@@ -14,13 +14,17 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import app.spotmycar.android.MainActivity
 import app.spotmycar.android.R
+import app.spotmycar.android.ui.theme.Smc
+import androidx.compose.ui.graphics.toArgb
 
-/** La petite notification « Place enregistrée » après un enregistrement automatique. */
+/** Les notifications de l'app : « Place enregistrée » et les alertes de stationnement. */
 object Notifier {
     const val EXTRA_OPEN_DETAILS = "app.spotmycar.android.OPEN_DETAILS"
+    const val EXTRA_OPEN_GUIDE = "app.spotmycar.android.OPEN_GUIDE"
 
-    private const val CHANNEL_ID = "parking_spot"
-    private const val NOTIFICATION_ID = 1001
+    private const val CHANNEL_SPOT = "parking_spot"
+    private const val CHANNEL_ALERTS = "parking_alerts"
+    private const val NOTIFICATION_SAVED = 1001
 
     fun canNotify(context: Context): Boolean {
         val permissionOk = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
@@ -29,28 +33,53 @@ object Notifier {
         return permissionOk && NotificationManagerCompat.from(context).areNotificationsEnabled()
     }
 
-    @SuppressLint("MissingPermission")
+    /** Après un enregistrement automatique : propose d'ajouter le niveau. */
     fun showAutoSaved(context: Context, hasPosition: Boolean) {
+        val text = context.getString(
+            if (hasPosition) R.string.notification_saved_text else R.string.notification_saved_text_no_gps,
+        )
+        post(
+            context = context,
+            channel = CHANNEL_SPOT,
+            id = NOTIFICATION_SAVED,
+            title = context.getString(R.string.notification_saved_title),
+            text = text,
+            extra = EXTRA_OPEN_DETAILS,
+        )
+    }
+
+    /** Une alerte (fermeture, durée, gratuité) : ouvre le guidage vers la voiture. */
+    fun showAlert(context: Context, id: Int, title: String, text: String) {
+        post(
+            context = context,
+            channel = CHANNEL_ALERTS,
+            id = id,
+            title = title,
+            text = text,
+            extra = EXTRA_OPEN_GUIDE,
+        )
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun post(context: Context, channel: String, id: Int, title: String, text: String, extra: String) {
         if (!canNotify(context)) return
-        ensureChannel(context)
+        ensureChannels(context)
 
         val openApp = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            putExtra(EXTRA_OPEN_DETAILS, true)
+            putExtra(extra, true)
         }
         val pendingIntent = PendingIntent.getActivity(
             context,
-            0,
+            id,
             openApp,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        val text = context.getString(
-            if (hasPosition) R.string.notification_saved_text else R.string.notification_saved_text_no_gps,
-        )
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+        val notification = NotificationCompat.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_stat_pin)
-            .setContentTitle(context.getString(R.string.notification_saved_title))
+            .setColor(Smc.Amber.toArgb())
+            .setContentTitle(title)
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setContentIntent(pendingIntent)
@@ -59,21 +88,31 @@ object Notifier {
             .build()
 
         try {
-            NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification)
+            NotificationManagerCompat.from(context).notify(id, notification)
         } catch (e: SecurityException) {
-            // Autorisation retirée entre-temps : la place est notée quand même.
+            // Autorisation retirée entre-temps : rien à faire.
         }
     }
 
-    private fun ensureChannel(context: Context) {
+    private fun ensureChannels(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
-        if (manager.getNotificationChannel(CHANNEL_ID) != null) return
-        manager.createNotificationChannel(
-            NotificationChannel(
-                CHANNEL_ID,
-                context.getString(R.string.notification_channel),
-                NotificationManager.IMPORTANCE_DEFAULT,
-            ),
-        )
+        if (manager.getNotificationChannel(CHANNEL_SPOT) == null) {
+            manager.createNotificationChannel(
+                NotificationChannel(
+                    CHANNEL_SPOT,
+                    context.getString(R.string.notification_channel),
+                    NotificationManager.IMPORTANCE_DEFAULT,
+                ),
+            )
+        }
+        if (manager.getNotificationChannel(CHANNEL_ALERTS) == null) {
+            manager.createNotificationChannel(
+                NotificationChannel(
+                    CHANNEL_ALERTS,
+                    context.getString(R.string.notification_channel_alerts),
+                    NotificationManager.IMPORTANCE_HIGH,
+                ),
+            )
+        }
     }
 }

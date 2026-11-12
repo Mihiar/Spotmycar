@@ -1,68 +1,114 @@
 package app.spotmycar.android.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
+import app.spotmycar.android.R
 
-// Palette SpotMyCar : un bleu « panneau de parking », un ambre pour l'épingle,
-// un vert pour « retrouvée ». Contrastes lisibles à tout âge.
-val SignBlue = Color(0xFF1F4FD8)
-val PinAmber = Color(0xFFF5A30B)
-val FoundGreen = Color(0xFF0E9F6E)
+/*
+ * Direction A « sombre technique » (prototype 3a de Claude Design) :
+ * fond graphite, ambre #F5A524 pour tout ce qui compte, gris doux pour le reste.
+ * Le thème est toujours sombre : lisible au fond d'un parking mal éclairé.
+ */
+object Smc {
+    val Background = Color(0xFF131519)
+    val Surface = Color(0xFF1B1E24)
+    val SurfaceHigh = Color(0xFF22262E)
+    val Border = Color(0xFF2A2E36)
+    val BorderStrong = Color(0xFF363B45)
+    val Hatch1 = Color(0xFF1F232A)
+    val Hatch2 = Color(0xFF232830)
+    val Text = Color(0xFFE8E6E1)
+    val TextSoft = Color(0xFFCFD4DC)
+    val Muted = Color(0xFF9AA1AC)
+    val Dim = Color(0xFF7D838D)
+    val Faint = Color(0xFF5E6570)
+    val Amber = Color(0xFFF5A524)
+    val AmberLight = Color(0xFFFFC45C)
+    val OnAmber = Color(0xFF16181C)
+    val Success = Color(0xFF5FD9A8)
+    val Off = Color(0xFF2F343D)
+}
 
-private val LightColors = lightColorScheme(
-    primary = SignBlue,
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFDCE6FF),
-    onPrimaryContainer = Color(0xFF0A2472),
-    secondary = PinAmber,
-    onSecondary = Color(0xFF2B1B00),
-    secondaryContainer = Color(0xFFFFEBC2),
-    onSecondaryContainer = Color(0xFF3D2800),
-    tertiary = FoundGreen,
-    onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFCFF5E4),
-    onTertiaryContainer = Color(0xFF053D29),
-    background = Color(0xFFF3F5F9),
-    onBackground = Color(0xFF142033),
-    surface = Color.White,
-    onSurface = Color(0xFF142033),
-    surfaceVariant = Color(0xFFE4E8F0),
-    onSurfaceVariant = Color(0xFF46536A),
-    outline = Color(0xFF8A94A6),
-    outlineVariant = Color(0xFFCBD2DE),
+/** Barlow pour le texte, Barlow Condensed pour les titres et les chiffres. */
+val Barlow = FontFamily(
+    Font(R.font.barlow_regular, FontWeight.Normal),
+    Font(R.font.barlow_medium, FontWeight.Medium),
+    Font(R.font.barlow_semi_bold, FontWeight.SemiBold),
 )
+val BarlowCondensed = FontFamily(
+    Font(R.font.barlow_condensed_semi_bold, FontWeight.SemiBold),
+    Font(R.font.barlow_condensed_bold, FontWeight.Bold),
+)
+
+/**
+ * Espacement des lettres des petits titres en capitales. En arabe, l'écriture
+ * est liée : on n'écarte jamais les lettres.
+ */
+@Composable
+@ReadOnlyComposable
+fun tracking(value: Float): TextUnit =
+    if (LocalLayoutDirection.current == LayoutDirection.Rtl) 0.sp else value.em
 
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFF9DB7FF),
-    onPrimary = Color(0xFF05205F),
-    primaryContainer = Color(0xFF173A9E),
-    onPrimaryContainer = Color(0xFFDCE6FF),
-    secondary = Color(0xFFFFC14D),
-    onSecondary = Color(0xFF3D2800),
-    secondaryContainer = Color(0xFF5A3D00),
-    onSecondaryContainer = Color(0xFFFFEBC2),
-    tertiary = Color(0xFF5FD9A8),
-    onTertiary = Color(0xFF00382A),
-    tertiaryContainer = Color(0xFF07513A),
-    onTertiaryContainer = Color(0xFFCFF5E4),
-    background = Color(0xFF0E1522),
-    onBackground = Color(0xFFE6EAF2),
-    surface = Color(0xFF172133),
-    onSurface = Color(0xFFE6EAF2),
-    surfaceVariant = Color(0xFF263247),
-    onSurfaceVariant = Color(0xFFB4BED0),
-    outline = Color(0xFF7D889C),
-    outlineVariant = Color(0xFF3A465C),
+    primary = Smc.Amber,
+    onPrimary = Smc.OnAmber,
+    primaryContainer = Smc.SurfaceHigh,
+    onPrimaryContainer = Smc.Text,
+    secondary = Smc.Amber,
+    onSecondary = Smc.OnAmber,
+    tertiary = Smc.Success,
+    onTertiary = Smc.OnAmber,
+    background = Smc.Background,
+    onBackground = Smc.Text,
+    surface = Smc.Surface,
+    onSurface = Smc.Text,
+    surfaceVariant = Smc.SurfaceHigh,
+    onSurfaceVariant = Smc.Muted,
+    surfaceContainerHigh = Smc.Surface,
+    surfaceContainerHighest = Smc.SurfaceHigh,
+    outline = Smc.BorderStrong,
+    outlineVariant = Smc.Border,
 )
+
+private val SmcTypography = Typography().let { base ->
+    fun TextStyle.barlow() = copy(fontFamily = Barlow)
+    base.copy(
+        displayLarge = base.displayLarge.barlow(),
+        displayMedium = base.displayMedium.barlow(),
+        displaySmall = base.displaySmall.barlow(),
+        headlineLarge = base.headlineLarge.barlow(),
+        headlineMedium = base.headlineMedium.barlow(),
+        headlineSmall = base.headlineSmall.barlow(),
+        titleLarge = base.titleLarge.barlow(),
+        titleMedium = base.titleMedium.barlow(),
+        titleSmall = base.titleSmall.barlow(),
+        bodyLarge = base.bodyLarge.barlow().copy(fontSize = 16.sp),
+        bodyMedium = base.bodyMedium.barlow(),
+        bodySmall = base.bodySmall.barlow(),
+        labelLarge = base.labelLarge.barlow(),
+        labelMedium = base.labelMedium.barlow(),
+        labelSmall = base.labelSmall.barlow(),
+    )
+}
 
 @Composable
 fun SpotMyCarTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = if (isSystemInDarkTheme()) DarkColors else LightColors,
+        colorScheme = DarkColors,
+        typography = SmcTypography,
         content = content,
     )
 }

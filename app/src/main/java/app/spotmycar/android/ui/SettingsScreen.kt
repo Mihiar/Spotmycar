@@ -51,6 +51,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.BorderStroke
+import app.spotmycar.android.ui.theme.Smc
 import app.spotmycar.android.BuildConfig
 import app.spotmycar.android.R
 import app.spotmycar.android.bluetooth.BluetoothHelper
@@ -65,7 +67,7 @@ import app.spotmycar.android.util.Actions
  * comme une liste d'étapes à cocher, une seule fois.
  */
 @Composable
-fun SettingsScreen(resumeTick: Int, onBack: () -> Unit) {
+fun SettingsScreen(resumeTick: Int, onBack: () -> Unit, onReplayIntro: () -> Unit) {
     val context = LocalContext.current
     val settings = remember { AppSettings(context) }
 
@@ -114,15 +116,10 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = stringResource(R.string.action_back),
-                    tint = MaterialTheme.colorScheme.onBackground,
+                    tint = Smc.Muted,
                 )
             }
-            Text(
-                text = stringResource(R.string.settings_title),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
+            BarTitle(text = stringResource(R.string.settings_title))
         }
 
         // ── Enregistrement automatique ────────────────────────────────────────
@@ -131,7 +128,7 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit) {
                 Icon(
                     painter = painterResource(R.drawable.ic_bluetooth),
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = Smc.Amber,
                     modifier = Modifier.size(24.dp),
                 )
                 Spacer(Modifier.width(10.dp))
@@ -144,7 +141,7 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit) {
             Text(
                 text = stringResource(R.string.auto_description),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Smc.Muted,
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -153,7 +150,7 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit) {
                     modifier = Modifier.weight(1f),
                 )
                 Spacer(Modifier.width(12.dp))
-                Switch(
+                SmcSwitch(
                     checked = autoEnabled,
                     onCheckedChange = { enabled ->
                         autoEnabled = enabled
@@ -168,9 +165,9 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit) {
                     text = stringResource(if (ready) R.string.auto_active else R.string.auto_incomplete),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (ready) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.secondary,
+                    color = if (ready) Smc.Success else Smc.Amber,
                 )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                HorizontalDivider(color = Smc.Border)
 
                 // Étape 1 : accès au Bluetooth.
                 StepRow(
@@ -192,7 +189,7 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit) {
                         Text(
                             text = stringResource(R.string.step_car_none),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = Smc.Muted,
                         )
                         OutlinedButton(onClick = { Actions.openBluetoothSettings(context) }) {
                             Text(text = stringResource(R.string.step_car_open_bluetooth))
@@ -250,7 +247,7 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit) {
             Text(
                 text = stringResource(R.string.reliability_description),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Smc.Muted,
             )
             OutlinedButton(
                 onClick = { Actions.openAutostartSettings(context) },
@@ -276,15 +273,18 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit) {
             Text(
                 text = stringResource(R.string.about_summary),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Smc.Muted,
             )
             Text(
                 text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Smc.Muted,
             )
             TextButton(onClick = { Actions.openUrl(context, Actions.PRIVACY_POLICY_URL) }) {
-                Text(text = stringResource(R.string.about_privacy))
+                Text(text = stringResource(R.string.about_privacy), color = Smc.Amber)
+            }
+            TextButton(onClick = onReplayIntro) {
+                Text(text = stringResource(R.string.about_replay_intro), color = Smc.Amber)
             }
         }
     }
@@ -331,9 +331,10 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit) {
 private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 1.dp,
+        shape = SmcCardShape,
+        color = Smc.Surface,
+        contentColor = Smc.Text,
+        border = BorderStroke(1.dp, Smc.Border),
     ) {
         Column(
             modifier = Modifier.padding(18.dp),
@@ -358,7 +359,7 @@ private fun StepRow(
                 .size(28.dp)
                 .clip(CircleShape)
                 .background(
-                    if (done) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.surfaceVariant,
+                    if (done) Smc.Success else Smc.SurfaceHigh,
                 ),
             contentAlignment = Alignment.Center,
         ) {
@@ -366,7 +367,7 @@ private fun StepRow(
                 Icon(
                     imageVector = Icons.Filled.Check,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onTertiary,
+                    tint = Smc.OnAmber,
                     modifier = Modifier.size(18.dp),
                 )
             }
@@ -381,7 +382,7 @@ private fun StepRow(
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Smc.Muted,
             )
         }
         if (!done && actionLabel != null && onAction != null) {
