@@ -46,6 +46,20 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
+      # ── Version de test téléchargeable sur le téléphone (branche main) ─────
+      - name: Publier la version de test
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk SpotMyCar-test.apk
+          gh release delete test --yes --cleanup-tag || true
+          gh release create test SpotMyCar-test.apk \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "Version de test (non signée pour la publication)" \
+            --notes "Dernière version de test, compilée automatiquement depuis main. À installer pour tester ; ce n'est pas la version publique."
+
       # ── Version publique : seulement sur une étiquette v… ──────────────────
       - name: Fabriquer la version signée
         if: startsWith(github.ref, 'refs/tags/v')
