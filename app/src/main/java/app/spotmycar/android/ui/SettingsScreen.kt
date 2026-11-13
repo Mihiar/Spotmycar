@@ -2,8 +2,6 @@ package app.spotmycar.android.ui
 
 import android.Manifest
 import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -84,24 +82,21 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit, onReplayIntro: () -> Uni
     val notificationsGranted = remember(resumeTick, refresh) { Notifier.canNotify(context) }
     val devices = remember(resumeTick, refresh) { BluetoothHelper.pairedDevices(context) }
 
-    val bluetoothLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { refresh += 1 }
-    val notificationLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { refresh += 1 }
-    val backgroundLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { refresh += 1 }
+    // Après un refus définitif, ces demandes ouvrent d'elles-mêmes les paramètres de l'app.
+    val bluetoothGate = rememberPermissionGate(Manifest.permission.BLUETOOTH_CONNECT) { refresh += 1 }
+    val notificationGate = rememberPermissionGate(Manifest.permission.POST_NOTIFICATIONS) { refresh += 1 }
+    val backgroundGate = rememberPermissionGate(Manifest.permission.ACCESS_BACKGROUND_LOCATION) { refresh += 1 }
     // Android impose deux temps : d'abord la position « pendant l'utilisation », puis « toujours ».
-    val foregroundLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions(),
-    ) { result ->
+    val foregroundGate = rememberPermissionGate(
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+    ) { granted ->
         refresh += 1
-        if (result.values.any { it } && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            backgroundLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        }
+        if (granted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) backgroundGate.request()
     }
+    val locationGate = if (foregroundGranted) backgroundGate else foregroundGate
+    val allowLabel = stringResource(R.string.action_allow)
+    val openSettingsLabel = stringResource(R.string.action_open_settings)
 
     Column(
         modifier = Modifier
@@ -174,8 +169,8 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit, onReplayIntro: () -> Uni
                     done = bluetoothGranted,
                     title = stringResource(R.string.step_bluetooth_title),
                     description = stringResource(R.string.step_bluetooth_desc),
-                    actionLabel = stringResource(R.string.action_allow),
-                    onAction = { bluetoothLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT) },
+                    actionLabel = if (bluetoothGate.blocked) openSettingsLabel else allowLabel,
+                    onAction = bluetoothGate.request,
                 )
 
                 // Étape 2 : quelle voiture ?
@@ -212,8 +207,11 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit, onReplayIntro: () -> Uni
                     done = backgroundGranted,
                     title = stringResource(R.string.step_location_title),
                     description = stringResource(R.string.step_location_desc),
-                    actionLabel = stringResource(R.string.action_allow),
-                    onAction = { showDisclosure = true },
+                    actionLabel = if (locationGate.blocked) openSettingsLabel else allowLabel,
+                    // L'explication a déjà été lue quand Android ne propose plus que les paramètres.
+                    onAction = {
+                        if (locationGate.blocked) locationGate.request() else showDisclosure = true
+                    },
                 )
 
                 // Étape 4 (facultative) : notification de confirmation.
@@ -221,10 +219,10 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit, onReplayIntro: () -> Uni
                     done = notificationsGranted,
                     title = stringResource(R.string.step_notifications_title),
                     description = stringResource(R.string.step_notifications_desc),
-                    actionLabel = stringResource(R.string.action_allow),
+                    actionLabel = if (notificationGate.blocked) openSettingsLabel else allowLabel,
                     onAction = {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            notificationGate.request()
                         } else {
                             Actions.openAppSettings(context)
                         }
@@ -304,14 +302,9 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit, onReplayIntro: () -> Uni
                     onClick = {
                         showDisclosure = false
                         if (!foregroundGranted) {
-                            foregroundLauncher.launch(
-                                arrayOf(
-                                    Manifest.permission.ACCESS_FINE_LOCATION,
-                                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                                ),
-                            )
+                            foregroundGate.request()
                         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                            backgroundLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                            backgroundGate.request()
                         }
                     },
                 ) {
