@@ -43,6 +43,11 @@ souterrain où le GPS ne passe pas, et qui aide à la retrouver.
 
 - **Lancement** : la spirale, le nom, la phrase d'accroche (une seconde et demie).
 - **Introduction** (une fois) : trois pages — la place s'enregistre seule ; niveau, zone, place ; on vous ramène.
+- **Mise en route** (juste après l'introduction) : une autorisation par écran, avec sa raison et un seul bouton —
+  position, choix de la voiture (Bluetooth), position « toujours », notifications. Chaque étape peut être remise à
+  « Plus tard » ; celles déjà réglées ne s'affichent pas.
+- **Refus définitif** : après deux refus, Android n'affiche plus sa fenêtre. L'app le détecte et le bouton ouvre
+  alors directement les paramètres de l'app (mise en route, Réglages, guidage, alertes).
 - **Accueil** (onglet) : les deux grandes cartes « Park my car » et « Find my car ». Avec une voiture
   enregistrée : ses repères, sa fiabilité, la photo, « Modifier la place », partage, et les trois dernières places.
 - **Park** : « Détection automatique » (GPS, Bluetooth de la voiture, baromètre : l'état réel de chaque
@@ -86,6 +91,8 @@ app/src/main/java/app/spotmycar/android/
   ui/ParkFlowScreens.kt        lancement, détection auto, voiture localisée, mode de secours, enregistrée
   ui/FindScreens.kt            recherche, « Trouvée ! »
   ui/GuideScreen.kt            guidage par pas, fiabilité, changement d'étage
+  ui/SetupScreen.kt            mise en route : les autorisations, une par écran
+  ui/Permissions.kt            demande d'autorisation qui gère le refus définitif
   ui/…                         Introduction, repères (SaveScreen), Historique, Alertes, Réglages,
                                photo et partage (Overlays.kt)
 app/src/main/res/font/         Plus Jakarta Sans (licence : licenses/PlusJakartaSans-OFL.txt)
@@ -99,9 +106,10 @@ docs/                          page web + politique de confidentialité (GitHub 
 - [x] Code de l'app écrit (v1 complète)
 - [x] Page web et politique de confidentialité rédigées
 - [x] Compilation automatique préparée
-- [ ] **Première compilation** (le code n'a pas encore été compilé : à faire sur GitHub)
+- [x] Première compilation réussie sur GitHub (13 nov. 2026)
 - [x] Nouvelle interface : « SpotMyCar Prototype v2 » appliqué (13 nov. 2026) : thème clair bleu, parcours Park / Find,
-      baromètre et score de fiabilité. **Pas encore compilé ni testé sur téléphone.**
+      baromètre et score de fiabilité. Compilé ; **pas encore testé sur téléphone.**
+- [x] Mise en route des autorisations et gestion du refus définitif (13 nov. 2026). **Pas encore testé sur téléphone.**
 - [ ] Test sur le Xiaomi : parcours manuel, parking sans GPS, Bluetooth automatique, alertes, boussole,
       baromètre (changement d'étage) et mode de secours
 - [ ] Clé de signature créée et mise à l'abri

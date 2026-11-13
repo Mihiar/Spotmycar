@@ -3,8 +3,6 @@ package app.spotmycar.android.ui
 import android.Manifest
 import android.location.Location
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -92,15 +90,18 @@ private const val RELIABLE_METERS = 25f
 @Composable
 fun GuideScreen(
     spot: ParkingSpot,
+    resumeTick: Int,
     onBack: () -> Unit,
     onOpenPhoto: () -> Unit,
     onArrived: () -> Unit,
 ) {
     val context = LocalContext.current
     var permissionTick by remember { mutableIntStateOf(0) }
-    val hasPermission = remember(permissionTick) { LocationFetcher.hasForegroundPermission(context) }
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions(),
+    // « resumeTick » : l'autorisation a pu être accordée dans les paramètres entre-temps.
+    val hasPermission = remember(permissionTick, resumeTick) { LocationFetcher.hasForegroundPermission(context) }
+    val locationGate = rememberPermissionGate(
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION,
     ) { permissionTick += 1 }
 
     var here by remember { mutableStateOf<Location?>(null) }
@@ -260,11 +261,7 @@ fun GuideScreen(
             Spacer(Modifier.height(14.dp))
             GhostButton(
                 text = stringResource(R.string.guide_allow_location),
-                onClick = {
-                    permissionLauncher.launch(
-                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-                    )
-                },
+                onClick = locationGate.request,
                 textColor = Smc.Blue,
                 modifier = Modifier.fillMaxWidth(),
             )

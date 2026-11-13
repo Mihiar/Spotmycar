@@ -4,8 +4,6 @@ import android.Manifest
 import android.app.TimePickerDialog
 import android.os.Build
 import android.text.format.DateFormat
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -74,15 +72,13 @@ fun AlertsScreen(spot: ParkingSpot?, resumeTick: Int, onOpenSettings: () -> Unit
     val autoReady = remember(resumeTick, refresh, autoOn) { BluetoothHelper.isAutoSaveReady(context) }
     val canNotify = remember(resumeTick, refresh) { Notifier.canNotify(context) }
 
-    val notificationLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { refresh += 1 }
+    val notificationGate = rememberPermissionGate(Manifest.permission.POST_NOTIFICATIONS) { refresh += 1 }
 
     /** Une alerte ne sert à rien sans notifications : on les demande au bon moment. */
     fun ensureNotifications() {
         if (Notifier.canNotify(context)) return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            notificationGate.request()
         } else {
             Actions.openAppSettings(context)
         }
