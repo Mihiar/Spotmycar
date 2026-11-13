@@ -103,16 +103,16 @@ fun ShareSheet(spot: ParkingSpot, onClose: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Smc.Background.copy(alpha = 0.6f))
+            .background(Smc.Text.copy(alpha = 0.4f))
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClose),
         contentAlignment = Alignment.BottomCenter,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
                 .background(Smc.Surface)
-                .border(1.dp, Smc.Border, RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                .border(1.dp, Smc.Border, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { }
                 .windowInsetsPadding(WindowInsets.navigationBars)
                 .padding(horizontal = 22.dp)
@@ -162,8 +162,8 @@ fun ShareSheet(spot: ParkingSpot, onClose: () -> Unit) {
                         clipboard?.setPrimaryClip(ClipData.newPlainText("SpotMyCar", message))
                         copied = true
                     },
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Smc.Amber, contentColor = Smc.OnAmber),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Smc.Blue, contentColor = Smc.OnBlue),
                 ) {
                     Text(
                         text = stringResource(if (copied) R.string.share_copied else R.string.share_copy),
@@ -207,7 +207,7 @@ private fun ShareTarget(label: String, modifier: Modifier = Modifier, onClick: (
             .padding(horizontal = 6.dp, vertical = 14.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = label, color = Smc.Text, fontSize = 14.sp, maxLines = 1)
+        Text(text = label, color = Smc.Text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
     }
 }
 
@@ -233,7 +233,7 @@ fun BottomTabs(current: Screen, onSelect: (Screen) -> Unit) {
                 Screen.ALERTS to R.string.tab_alerts,
             ).forEach { (target, label) ->
                 val selected = target == current
-                val color = if (selected) Smc.Amber else Smc.Faint
+                val color = if (selected) Smc.Blue else Smc.Faint
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -250,11 +250,10 @@ fun BottomTabs(current: Screen, onSelect: (Screen) -> Unit) {
                             .background(color),
                     )
                     Text(
-                        text = stringResource(label).uppercase(),
+                        text = stringResource(label),
                         color = color,
-                        fontSize = 11.sp,
-                        letterSpacing = tracking(0.1f),
-                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                        fontSize = 12.sp,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                     )
                 }
             }

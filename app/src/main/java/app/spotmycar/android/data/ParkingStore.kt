@@ -30,6 +30,7 @@ object ParkingStore {
     private const val K_PHOTO = "photo"
     private const val K_PLACE_NAME = "place_name"
     private const val K_AUTO = "auto"
+    private const val K_PRESSURE = "pressure"
 
     /** Ancienne clé (« étage / zone » en texte libre) : reprise dans le niveau. */
     private const val K_LEGACY_FLOOR = "floor"
@@ -124,6 +125,7 @@ object ParkingStore {
             photoPath = prefs.getString(K_PHOTO, null),
             placeName = prefs.getString(K_PLACE_NAME, "") ?: "",
             auto = prefs.getBoolean(K_AUTO, false),
+            pressureHpa = prefs.getString(K_PRESSURE, null)?.toFloatOrNull(),
         )
     }
 
@@ -142,6 +144,7 @@ object ParkingStore {
             .putString(K_PHOTO, spot.photoPath)
             .putString(K_PLACE_NAME, spot.placeName)
             .putBoolean(K_AUTO, spot.auto)
+            .putString(K_PRESSURE, spot.pressureHpa?.toString())
             .apply()
     }
 

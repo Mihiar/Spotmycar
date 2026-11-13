@@ -24,21 +24,37 @@ import app.spotmycar.android.data.AppSettings
 import app.spotmycar.android.data.HistoryStore
 import app.spotmycar.android.data.ParkingSpot
 import app.spotmycar.android.data.ParkingStore
+import app.spotmycar.android.location.Barometer
 import app.spotmycar.android.location.LocationFetcher
 import app.spotmycar.android.location.PlaceNamer
+import app.spotmycar.android.location.Reliability
 import app.spotmycar.android.ui.theme.Smc
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/** Les écrans de l'app (comme dans le prototype 3a). */
-enum class Screen { ONBOARDING, HOME, HISTORY, ALERTS, SAVE, GUIDE, SETTINGS }
+/** Les écrans de l'app (parcours du prototype v2, plus Historique, Alertes et Réglages). */
+enum class Screen {
+    SPLASH, ONBOARDING, HOME, HISTORY, ALERTS,
+    DETECT, LOCATED, FALLBACK, SAVE, SAVED,
+    FIND, GUIDE, ARRIVED,
+    SETTINGS,
+}
+
+/** Les écrans qui n'ont de sens que s'il y a une voiture enregistrée. */
+private val SPOT_SCREENS = setOf(
+    Screen.DETECT, Screen.LOCATED, Screen.FALLBACK, Screen.SAVE, Screen.SAVED,
+    Screen.FIND, Screen.GUIDE, Screen.ARRIVED,
+)
 
 /** Les trois onglets du bas. */
 private val TAB_SCREENS = setOf(Screen.HOME, Screen.HISTORY, Screen.ALERTS)
 
 /**
  * Chef d'orchestre : décide quel écran montrer.
- * Introduction (une fois) → Ma voiture / Historique / Alertes (onglets)
- * → par-dessus : Nouvelle place, Retour à la voiture, Réglages, photo, partage.
+ * Lancement → Introduction (une fois) → Accueil / Historique / Alertes (onglets).
+ * « Park » : Détection auto → Voiture localisée (ou Mode de secours → repères) → Enregistrée.
+ * « Find » : Recherche → Guidage → Trouvée !
+ * Par-dessus : Réglages, photo, partage.
  */
 @Composable
 fun SpotMyCarRoot(
@@ -54,12 +70,23 @@ fun SpotMyCarRoot(
     val spot by ParkingStore.spot.collectAsState()
     val history by HistoryStore.entries.collectAsState()
 
-    var screen by rememberSaveable {
-        mutableStateOf(if (settings.onboardingDone) Screen.HOME else Screen.ONBOARDING)
+    var screen by rememberSaveable { mutableStateOf(Screen.SPLASH) }
+    // L'écran de lancement ne dure qu'un instant.
+    LaunchedEffect(Unit) {
+        if (screen == Screen.SPLASH) {
+            delay(1_500L)
+            if (screen == Screen.SPLASH) {
+                screen = if (settings.onboardingDone) Screen.HOME else Screen.ONBOARDING
+            }
+        }
     }
     /** Vrai quand l'écran « Nouvelle place » vient d'une place créée à l'instant. */
     var saveIsNew by rememberSaveable { mutableStateOf(false) }
     var locating by remember { mutableStateOf(false) }
+    /** Vrai pendant la mesure du baromètre, juste après « Park my car ». */
+    var measuringPressure by remember { mutableStateOf(false) }
+    /** Vrai quand on arrive sur les repères par « Prendre une photo » (mode de secours). */
+    var saveWithPhoto by rememberSaveable { mutableStateOf(false) }
     var photoOpen by rememberSaveable { mutableStateOf(false) }
     var shareOpen by rememberSaveable { mutableStateOf(false) }
 
@@ -73,6 +100,7 @@ fun SpotMyCarRoot(
         if (openDetailsRequest) {
             if (ParkingStore.current(context) != null) {
                 saveIsNew = false
+                saveWithPhoto = false
                 screen = Screen.SAVE
             }
             onOpenDetailsConsumed()
@@ -88,7 +116,7 @@ fun SpotMyCarRoot(
 
     // Plus de place notée : les écrans qui en dépendent n'ont plus lieu d'être.
     LaunchedEffect(spot) {
-        if (spot == null && (screen == Screen.SAVE || screen == Screen.GUIDE)) screen = Screen.HOME
+        if (spot == null && screen in SPOT_SCREENS) screen = Screen.HOME
         if (spot == null) {
             photoOpen = false
             shareOpen = false
@@ -111,7 +139,10 @@ fun SpotMyCarRoot(
         screen = Screen.HOME
     }
 
-    BackHandler(enabled = photoOpen || shareOpen || (screen != Screen.HOME && screen != Screen.ONBOARDING)) {
+    BackHandler(
+        enabled = photoOpen || shareOpen ||
+            (screen != Screen.HOME && screen != Screen.ONBOARDING && screen != Screen.SPLASH),
+    ) {
         when {
             photoOpen -> photoOpen = false
             shareOpen -> shareOpen = false
@@ -119,17 +150,30 @@ fun SpotMyCarRoot(
         }
     }
 
-    // « Enregistrer ma place » : la place est notée tout de suite, la position arrive ensuite.
+    // « Park my car » : la place est notée tout de suite, puis le téléphone écoute ses
+    // capteurs (GPS, baromètre) pendant que l'écran « Détection automatique » s'affiche.
     val onParked: () -> Unit = {
         val newSpot = ParkingSpot(savedAt = System.currentTimeMillis())
         ParkingStore.replace(context, newSpot)
         saveIsNew = true
-        screen = Screen.SAVE
+        saveWithPhoto = false
+        screen = Screen.DETECT
+
+        measuringPressure = true
+        scope.launch {
+            val pressure = Barometer.readOnceSuspending(context, 1_500L)
+            if (pressure != null) {
+                ParkingStore.update(context) { current ->
+                    if (current.savedAt == newSpot.savedAt) current.copy(pressureHpa = pressure) else current
+                }
+            }
+            measuringPressure = false
+        }
 
         if (LocationFetcher.hasForegroundPermission(context)) {
             locating = true
             scope.launch {
-                val fix = LocationFetcher.fetchSuspending(context, 12_000L)
+                val fix = LocationFetcher.fetchSuspending(context, 7_000L)
                 if (fix != null) {
                     ParkingStore.update(context) { current ->
                         if (current.savedAt == newSpot.savedAt) current.withFix(fix) else current
@@ -153,6 +197,76 @@ fun SpotMyCarRoot(
             Box(modifier = Modifier.weight(1f)) {
                 Crossfade(targetState = screen, label = "screen") { current ->
                     when (current) {
+                        Screen.SPLASH -> SplashScreen()
+
+                        Screen.DETECT -> shownSpot?.let { parked ->
+                            DetectScreen(
+                                spot = parked,
+                                locating = locating,
+                                measuringPressure = measuringPressure,
+                                resumeTick = resumeTick,
+                                onFinished = {
+                                    // Automatique par défaut ; le mode de secours seulement si la fiabilité est trop basse.
+                                    if (screen == Screen.DETECT) {
+                                        val latest = ParkingStore.current(context)
+                                        screen = when {
+                                            latest == null -> Screen.HOME
+                                            Reliability.needsHelp(latest) -> Screen.FALLBACK
+                                            else -> Screen.LOCATED
+                                        }
+                                    }
+                                },
+                            )
+                        }
+
+                        Screen.LOCATED -> shownSpot?.let { parked ->
+                            LocatedScreen(
+                                spot = parked,
+                                onConfirm = { screen = Screen.SAVED },
+                                onCorrect = {
+                                    saveWithPhoto = false
+                                    screen = Screen.SAVE
+                                },
+                            )
+                        }
+
+                        Screen.FALLBACK -> FallbackScreen(
+                            onConfirmLevel = {
+                                saveWithPhoto = false
+                                screen = Screen.SAVE
+                            },
+                            onTakePhoto = {
+                                saveWithPhoto = true
+                                screen = Screen.SAVE
+                            },
+                            onSkip = { screen = Screen.SAVED },
+                        )
+
+                        Screen.SAVED -> shownSpot?.let { parked ->
+                            SavedScreen(spot = parked, onDone = goHome)
+                        }
+
+                        Screen.FIND -> shownSpot?.let { parked ->
+                            FindScreen(
+                                spot = parked,
+                                onFinished = { if (screen == Screen.FIND) screen = Screen.GUIDE },
+                            )
+                        }
+
+                        Screen.ARRIVED -> shownSpot?.let { parked ->
+                            ArrivedScreen(
+                                spot = parked,
+                                onDone = {
+                                    ParkingStore.finish(context)
+                                    goHome()
+                                },
+                                onParkAnother = {
+                                    ParkingStore.finish(context)
+                                    onParked()
+                                },
+                            )
+                        }
+
                         Screen.ONBOARDING -> OnboardingScreen(
                             onFinished = {
                                 settings.onboardingDone = true
@@ -166,9 +280,10 @@ fun SpotMyCarRoot(
                             history = history,
                             resumeTick = resumeTick,
                             onParked = onParked,
-                            onGuide = { screen = Screen.GUIDE },
+                            onFind = { screen = Screen.FIND },
                             onEdit = {
                                 saveIsNew = false
+                                saveWithPhoto = false
                                 screen = Screen.SAVE
                             },
                             onOpenPhoto = { photoOpen = true },
@@ -190,11 +305,13 @@ fun SpotMyCarRoot(
                                 spot = parked,
                                 isNew = saveIsNew,
                                 locating = locating,
+                                startWithPhoto = saveWithPhoto,
                                 onCancel = { discardNew ->
                                     if (discardNew) ParkingStore.discard(context)
                                     goHome()
                                 },
-                                onSaved = goHome,
+                                // Après une nouvelle place : l'écran « Votre voiture est enregistrée ! ».
+                                onSaved = { if (saveIsNew) screen = Screen.SAVED else goHome() },
                             )
                         }
 
@@ -203,10 +320,7 @@ fun SpotMyCarRoot(
                                 spot = parked,
                                 onBack = goHome,
                                 onOpenPhoto = { photoOpen = true },
-                                onArrived = {
-                                    ParkingStore.finish(context)
-                                    goHome()
-                                },
+                                onArrived = { screen = Screen.ARRIVED },
                             )
                         }
 

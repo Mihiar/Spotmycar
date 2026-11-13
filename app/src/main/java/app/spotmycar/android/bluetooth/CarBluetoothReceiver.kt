@@ -9,6 +9,7 @@ import app.spotmycar.android.data.AppSettings
 import app.spotmycar.android.data.Fix
 import app.spotmycar.android.data.ParkingSpot
 import app.spotmycar.android.data.ParkingStore
+import app.spotmycar.android.location.Barometer
 import app.spotmycar.android.location.LocationFetcher
 import app.spotmycar.android.notify.Notifier
 
@@ -37,17 +38,20 @@ class CarBluetoothReceiver : BroadcastReceiver() {
         val pending = goAsync()
         val appContext = context.applicationContext
         LocationFetcher.fetch(appContext, FETCH_TIMEOUT_MILLIS) { fix ->
-            try {
-                val changed = saveAutomatically(appContext, fix)
-                if (changed) Notifier.showAutoSaved(appContext, hasPosition = fix != null)
-            } finally {
-                pending.finish()
+            // Le baromètre (s'il existe) : une seconde de plus, pour estimer l'étage au retour.
+            Barometer.readOnce(appContext, PRESSURE_TIMEOUT_MILLIS) { pressure ->
+                try {
+                    val changed = saveAutomatically(appContext, fix, pressure)
+                    if (changed) Notifier.showAutoSaved(appContext, hasPosition = fix != null)
+                } finally {
+                    pending.finish()
+                }
             }
         }
     }
 
     /** @return vrai si une nouvelle place a été notée (faux si on a gardé l'existante). */
-    private fun saveAutomatically(context: Context, fix: Fix?): Boolean {
+    private fun saveAutomatically(context: Context, fix: Fix?, pressure: Float?): Boolean {
         val now = System.currentTimeMillis()
         val existing = ParkingStore.current(context)
 
@@ -60,7 +64,7 @@ class CarBluetoothReceiver : BroadcastReceiver() {
             return false
         }
 
-        val spot = ParkingSpot(savedAt = now, auto = true)
+        val spot = ParkingSpot(savedAt = now, auto = true, pressureHpa = pressure)
         ParkingStore.replace(context, if (fix != null) spot.withFix(fix) else spot)
         return true
     }
@@ -85,6 +89,7 @@ class CarBluetoothReceiver : BroadcastReceiver() {
     private companion object {
         /** Un récepteur doit répondre en une dizaine de secondes : on reste en dessous. */
         const val FETCH_TIMEOUT_MILLIS = 4_500L
+        const val PRESSURE_TIMEOUT_MILLIS = 700L
         const val SAME_PLACE_METERS = 75f
         const val SAME_PLACE_WINDOW_MILLIS = 10L * 60L * 1000L
     }
