@@ -1,6 +1,6 @@
 # SpotMyCar : document de contexte du projet
 
-> Document vivant. À mettre à jour à chaque décision. Dernière mise à jour : 12 novembre 2026.
+> Document vivant. À mettre à jour à chaque décision. Dernière mise à jour : 13 novembre 2026.
 
 ## En une phrase
 
@@ -18,7 +18,7 @@ souterrain où le GPS ne passe pas, et qui aide à la retrouver.
 | Marché | Maroc d'abord, puis international | Français, anglais et arabe dès la v1 |
 | Distribution | Lien direct (APK) + Google Play en parallèle | Google impose ~3 semaines à un compte neuf ; le lien direct est disponible tout de suite |
 | Hébergement | GitHub (code, page web, fichier à télécharger) | Gratuit, et l'app n'a aucun serveur à faire tourner |
-| Direction visuelle | Prototype 3a « sombre technique » (Claude Design) : graphite `#131519`, ambre `#F5A524`, polices Barlow et Barlow Condensed | Choisie le 12 novembre 2026 ; lisible au fond d'un parking mal éclairé |
+| Direction visuelle | « SpotMyCar Prototype v2 » (Claude Design) : thème clair, fond `#F4F7FD`, bleu `#1F6BFF` (garer), violet `#8B6CF6` (retrouver), police Plus Jakarta Sans | Choisie le 13 novembre 2026 ; remplace le prototype 3a « sombre technique » du 12 novembre |
 | Identifiant de l'app | `app.spotmycar.android` | Définitif une fois publié sur Google Play |
 | Android minimum | Android 8.0 (API 26) ; cible Android 16 (API 36) | API 36 est exigée par Google Play pour toute nouvelle app |
 
@@ -29,25 +29,29 @@ souterrain où le GPS ne passe pas, et qui aide à la retrouver.
 2. **Zéro effort.** L'enregistrement automatique par Bluetooth est ce qui distingue
    l'app : les concurrents échouent parce qu'ils demandent un geste au moment où
    l'on est le moins motivé.
-3. **Loi de Hick.** Un seul geste possible sur l'écran d'accueil.
-4. **Règle du pic et de la fin.** L'écran « retrouver » est le moment qui compte :
-   le repère en très grand, l'itinéraire à un appui.
-5. **Actions principales empilées verticalement** ; seul le petit bouton « partager » se place à côté de « Modifier la place ».
-6. **Animation « pin drop ».** L'épingle tombe et une onde part quand on se gare ;
-   les ondes reviennent et l'épingle saute quand on retrouve la voiture.
-7. **Thème toujours sombre**, ambre pour ce qui compte (niveau, bouton principal), gris doux pour le reste. Gros chiffres, contrastes forts.
+3. **Automatique par défaut.** Après « Park my car », aucune saisie : le téléphone écoute
+   ses capteurs. Le mode de secours ne s'affiche que si la fiabilité est trop basse, et ne
+   demande qu'un seul geste (confirmer l'étage ou prendre une photo).
+4. **La fiabilité est toujours visible** : un pourcentage à l'enregistrement, une pastille
+   « Direction fiable » ou « Direction estimée · ± N m » pendant le guidage.
+5. **Règle du pic et de la fin.** L'écran « Trouvée ! » clôt le parcours sur une note heureuse.
+6. **Deux gestes sur l'accueil** : « Park my car » et « Find my car ». Celle qui sert est mise
+   en avant (bleue sans voiture enregistrée, violette avec).
+7. **Thème clair bleu**, cartes blanches très arrondies, gros chiffres.
 
 ## Ce que fait la v1
 
+- **Lancement** : la spirale, le nom, la phrase d'accroche (une seconde et demie).
 - **Introduction** (une fois) : trois pages — la place s'enregistre seule ; niveau, zone, place ; on vous ramène.
-- **Ma voiture** (onglet) : sans place, « Enregistrer ma place » (l'épingle tombe, la place est notée
-  tout de suite, la position GPS arrive ensuite). Avec une place : niveau en très grand, zone, place,
-  photo de repère, dernier signal GPS, mode d'enregistrement, repère, « Me guider vers la voiture »,
-  « Modifier la place », partage, et les trois dernières places.
-- **Nouvelle place** : niveau (3 à -5) et zone (A à H) en un appui, numéro de place, photo du panneau,
-  repère. Tout est facultatif ; « Annuler » juste après avoir noté une place l'efface.
-- **Retour à la voiture** : flèche-boussole et distance en direct quand il y a du GPS ; niveaux du
-  parking, étapes (niveau, zone, place, repère) ; itinéraire Google Maps ; « Je suis à ma voiture ».
+- **Accueil** (onglet) : les deux grandes cartes « Park my car » et « Find my car ». Avec une voiture
+  enregistrée : ses repères, sa fiabilité, la photo, « Modifier la place », partage, et les trois dernières places.
+- **Park** : « Détection automatique » (GPS, Bluetooth de la voiture, baromètre : l'état réel de chaque
+  signal) → « Voiture localisée automatiquement » avec le pourcentage de fiabilité, ou « Position
+  incertaine » (mode de secours) → « Confirmez l'étage » (niveau, zone, numéro, photo, repère ; tout est
+  facultatif) → « Votre voiture est enregistrée ! » avec les sources utilisées.
+- **Find** : « Recherche de votre voiture » (rappel des repères et de la fiabilité) → guidage : des pas
+  mènent vers la voiture, distance en gros, pastille de fiabilité, changement d'étage estimé par le
+  baromètre, itinéraire Google Maps, photo → « Trouvée ! ».
 - **Historique** (onglet) : places du mois, durée moyenne, liste des places précédentes (sans photo, 50 au plus).
 - **Alertes** (onglet) : parking qui ferme (rappel 15 min avant), durée maximale, stationnement gratuit,
   et l'enregistrement automatique par coupure Bluetooth. Alarmes programmées sur le téléphone.
@@ -74,10 +78,17 @@ app/src/main/java/app/spotmycar/android/
   alerts/AlertReceiver.kt      affiche l'alerte ; reprogramme après redémarrage
   notify/Notifier.kt           notifications
   util/Photos.kt, Actions.kt, SpotText.kt   photos ; cartes, partage ; petites phrases
-  ui/theme/Theme.kt            couleurs et polices de la direction « sombre technique »
-  ui/…                         Introduction, Ma voiture, Nouvelle place, Retour, Historique,
-                               Alertes, Réglages, photo et partage (Overlays.kt)
-app/src/main/res/font/         Barlow et Barlow Condensed (licence : licenses/Barlow-OFL.txt)
+  location/Barometer.kt        baromètre : pression près de la voiture, écart de niveaux au retour
+  location/Reliability.kt      score de fiabilité (0 à 100) et seuil du mode de secours
+  ui/theme/Theme.kt            couleurs et police de la direction « clair bleu » (prototype v2)
+  ui/Common.kt, Widgets.kt     briques visuelles : boutons, cartes, spirale, lignes de signal, fiabilité
+  ui/HomeScreen.kt             accueil : cartes « Park my car » et « Find my car »
+  ui/ParkFlowScreens.kt        lancement, détection auto, voiture localisée, mode de secours, enregistrée
+  ui/FindScreens.kt            recherche, « Trouvée ! »
+  ui/GuideScreen.kt            guidage par pas, fiabilité, changement d'étage
+  ui/…                         Introduction, repères (SaveScreen), Historique, Alertes, Réglages,
+                               photo et partage (Overlays.kt)
+app/src/main/res/font/         Plus Jakarta Sans (licence : licenses/PlusJakartaSans-OFL.txt)
 app/src/main/res/values*/strings.xml   textes EN / FR / AR (générés par tools/gen_strings.py)
 docs/                          page web + politique de confidentialité (GitHub Pages)
 .github/workflows/build.yml    compilation automatique et publication de l'APK
@@ -89,8 +100,10 @@ docs/                          page web + politique de confidentialité (GitHub 
 - [x] Page web et politique de confidentialité rédigées
 - [x] Compilation automatique préparée
 - [ ] **Première compilation** (le code n'a pas encore été compilé : à faire sur GitHub)
-- [x] Nouvelle interface : prototype 3a « sombre technique » appliqué (12 nov. 2026)
-- [ ] Test sur le Xiaomi : parcours manuel, parking sans GPS, Bluetooth automatique, alertes, boussole
+- [x] Nouvelle interface : « SpotMyCar Prototype v2 » appliqué (13 nov. 2026) : thème clair bleu, parcours Park / Find,
+      baromètre et score de fiabilité. **Pas encore compilé ni testé sur téléphone.**
+- [ ] Test sur le Xiaomi : parcours manuel, parking sans GPS, Bluetooth automatique, alertes, boussole,
+      baromètre (changement d'étage) et mode de secours
 - [ ] Clé de signature créée et mise à l'abri
 - [ ] Version 1.0.0 publiée en lien direct
 - [ ] Compte Google Play Console ouvert et vérifié
@@ -110,7 +123,17 @@ docs/                          page web + politique de confidentialité (GitHub 
   batterie », le téléphone peut ne pas réveiller l'app à la déconnexion Bluetooth.
 - **Vérification des développeurs Android** : en 2027, Google étendra au monde entier
   l'obligation d'être un développeur vérifié, même pour un APK en lien direct.
-- **Textes arabes** : à relire par un arabophone avant publication.
+- **Textes arabes** : à relire par un arabophone avant publication (y compris les nouveaux textes du 13 novembre).
+- **Baromètre** : tous les téléphones n'en ont pas, et la pression change avec la météo. L'écart de
+  niveaux n'est donc affiché que si la voiture a été garée il y a moins de deux heures, et il est
+  présenté comme une estimation. La valeur « 0,36 hPa par niveau » (environ 3 m) est à vérifier sur le terrain.
+- **Fiabilité** : le pourcentage est un score maison (GPS, Bluetooth, baromètre, repères confirmés), pas
+  une mesure physique. Les seuils sont dans `location/Reliability.kt` et devront être ajustés après les tests.
+- **Non repris du prototype v2** : le signal Wi-Fi (il faudrait scanner les réseaux, donc une autorisation
+  de plus, et aucune carte des Wi-Fi de parking n'existe), le scan de QR code ou de pilier, et les photos
+  d'illustration (remplacées par des dessins). Les pas du guidage sont une animation qui indique la
+  direction ; ils ne comptent pas les vrais pas.
+- **Page web** (`docs/`) : encore aux couleurs de l'ancien style sombre.
 
 ## Pour modifier un texte de l'app
 
