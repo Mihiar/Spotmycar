@@ -120,7 +120,7 @@ fun AlertsScreen(spot: ParkingSpot?, resumeTick: Int, onOpenSettings: () -> Unit
                         modifier = Modifier
                             .size(30.dp)
                             .clip(RoundedCornerShape(7.dp))
-                            .background(Smc.Amber),
+                            .background(Smc.Blue),
                     )
                     Spacer(Modifier.width(12.dp))
                     Column {
@@ -144,7 +144,7 @@ fun AlertsScreen(spot: ParkingSpot?, resumeTick: Int, onOpenSettings: () -> Unit
         if (!canNotify && (closingOn || durationOn || freeOn || autoOn)) {
             Spacer(Modifier.height(10.dp))
             TextButton(onClick = { ensureNotifications() }) {
-                Text(text = stringResource(R.string.alerts_notifications_off), color = Smc.Amber, fontSize = 13.5.sp)
+                Text(text = stringResource(R.string.alerts_notifications_off), color = Smc.Blue, fontSize = 13.5.sp)
             }
         }
 
@@ -264,7 +264,7 @@ fun AlertsScreen(spot: ParkingSpot?, resumeTick: Int, onOpenSettings: () -> Unit
                             RadioButton(
                                 selected = hours == maxHours,
                                 onClick = null,
-                                colors = RadioButtonDefaults.colors(selectedColor = Smc.Amber),
+                                colors = RadioButtonDefaults.colors(selectedColor = Smc.Blue),
                             )
                             Text(
                                 text = stringResource(R.string.duration_hours, hours),
@@ -327,7 +327,7 @@ private fun AlertRow(
             if (checked) {
                 Text(
                     text = stringResource(R.string.action_edit),
-                    color = Smc.Amber,
+                    color = Smc.Blue,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier

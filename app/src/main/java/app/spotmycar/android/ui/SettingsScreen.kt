@@ -128,7 +128,7 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit, onReplayIntro: () -> Uni
                 Icon(
                     painter = painterResource(R.drawable.ic_bluetooth),
                     contentDescription = null,
-                    tint = Smc.Amber,
+                    tint = Smc.Blue,
                     modifier = Modifier.size(24.dp),
                 )
                 Spacer(Modifier.width(10.dp))
@@ -165,7 +165,7 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit, onReplayIntro: () -> Uni
                     text = stringResource(if (ready) R.string.auto_active else R.string.auto_incomplete),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (ready) Smc.Success else Smc.Amber,
+                    color = if (ready) Smc.Success else Smc.Blue,
                 )
                 HorizontalDivider(color = Smc.Border)
 
@@ -281,10 +281,10 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit, onReplayIntro: () -> Uni
                 color = Smc.Muted,
             )
             TextButton(onClick = { Actions.openUrl(context, Actions.PRIVACY_POLICY_URL) }) {
-                Text(text = stringResource(R.string.about_privacy), color = Smc.Amber)
+                Text(text = stringResource(R.string.about_privacy), color = Smc.Blue)
             }
             TextButton(onClick = onReplayIntro) {
-                Text(text = stringResource(R.string.about_replay_intro), color = Smc.Amber)
+                Text(text = stringResource(R.string.about_replay_intro), color = Smc.Blue)
             }
         }
     }
@@ -367,7 +367,7 @@ private fun StepRow(
                 Icon(
                     imageVector = Icons.Filled.Check,
                     contentDescription = null,
-                    tint = Smc.OnAmber,
+                    tint = Smc.OnBlue,
                     modifier = Modifier.size(18.dp),
                 )
             }

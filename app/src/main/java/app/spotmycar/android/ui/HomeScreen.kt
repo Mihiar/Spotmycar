@@ -1,40 +1,33 @@
 package app.spotmycar.android.ui
 
 import android.Manifest
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -44,17 +37,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.spotmycar.android.R
@@ -63,10 +58,9 @@ import app.spotmycar.android.data.LocationSource
 import app.spotmycar.android.data.ParkingSpot
 import app.spotmycar.android.data.PastSpot
 import app.spotmycar.android.location.LocationFetcher
-import app.spotmycar.android.ui.theme.Barlow
-import app.spotmycar.android.ui.theme.BarlowCondensed
+import app.spotmycar.android.location.Reliability
+import app.spotmycar.android.ui.theme.Jakarta
 import app.spotmycar.android.ui.theme.Smc
-import app.spotmycar.android.ui.theme.tracking
 import app.spotmycar.android.util.SpotText
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
@@ -74,7 +68,14 @@ import kotlin.math.roundToInt
 /** En dessous de cette marge d'erreur, on considère la position comme précise. */
 private const val PRECISE_ACCURACY_METERS = 60f
 
-/** Onglet « Ma voiture » : la place en cours, ou l'invitation à l'enregistrer. */
+/** Les deux grands titres de l'accueil : ce sont des noms de marque, non traduits. */
+private const val PARK_TITLE = "PARK\nMY CAR"
+private const val FIND_TITLE = "FIND\nMY CAR"
+
+/**
+ * Accueil (prototype v2) : deux grandes cartes, « Park my car » et « Find my car ».
+ * Sans voiture enregistrée, « Park » est mise en avant ; avec une voiture, c'est « Find ».
+ */
 @Composable
 fun HomeScreen(
     spot: ParkingSpot?,
@@ -82,13 +83,17 @@ fun HomeScreen(
     history: List<PastSpot>,
     resumeTick: Int,
     onParked: () -> Unit,
-    onGuide: () -> Unit,
+    onFind: () -> Unit,
     onEdit: () -> Unit,
     onOpenPhoto: () -> Unit,
     onShare: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenHistory: () -> Unit,
 ) {
+    val context = LocalContext.current
+    val autoSaveReady = remember(resumeTick) { BluetoothHelper.isAutoSaveReady(context) }
+    var confirmReplace by remember { mutableStateOf(false) }
+
     // L'heure affichée (« il y a 2 heures ») se met à jour toute seule.
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
@@ -98,58 +103,138 @@ fun HomeScreen(
         }
     }
 
+    // Qu'on accepte ou non la position, la détection démarre : sans GPS, le mode de secours prend le relais.
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { onParked() }
+
+    val startPark: () -> Unit = {
+        if (LocationFetcher.hasForegroundPermission(context)) {
+            onParked()
+        } else {
+            permissionLauncher.launch(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+            )
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 22.dp)
-            .padding(top = 12.dp, bottom = 24.dp),
+            .padding(horizontal = 18.dp)
+            .padding(top = 8.dp, bottom = 24.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = stringResource(R.string.app_name).uppercase(),
-                color = Smc.Muted,
-                fontFamily = BarlowCondensed,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 17.sp,
-                letterSpacing = tracking(0.2f),
-                modifier = Modifier.weight(1f),
-            )
-            OutlinedIconButton(
-                onClick = onOpenSettings,
-                shape = SmcShape,
-                border = BorderStroke(1.dp, Smc.BorderStrong),
-                modifier = Modifier.size(40.dp),
-            ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Wordmark(size = 19.sp)
+            IconButton(onClick = onOpenSettings, modifier = Modifier.align(Alignment.CenterEnd)) {
                 Icon(
                     imageVector = Icons.Filled.Settings,
                     contentDescription = stringResource(R.string.settings_title),
                     tint = Smc.Muted,
-                    modifier = Modifier.size(20.dp),
                 )
             }
         }
 
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = stringResource(R.string.home_question),
+            color = Smc.Text,
+            fontFamily = Jakarta,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 16.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        Spacer(Modifier.height(18.dp))
+        ActionCard(
+            title = PARK_TITLE,
+            subtitle = stringResource(R.string.home_park_sub),
+            look = if (spot == null) ParkPrimary else ParkQuiet,
+            badge = null,
+            onClick = { if (spot != null) confirmReplace = true else startPark() },
+        )
+
+        Spacer(Modifier.height(6.dp))
+        if (autoSaveReady) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_bolt),
+                    contentDescription = null,
+                    tint = Smc.Success,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(text = stringResource(R.string.home_auto_on), color = Smc.Muted, fontSize = 12.sp)
+            }
+        } else {
+            TextButton(onClick = onOpenSettings, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_bolt),
+                    contentDescription = null,
+                    tint = Smc.Blue,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = stringResource(R.string.home_auto_off),
+                    color = Smc.Blue,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
+
+        Spacer(Modifier.height(6.dp))
+        ActionCard(
+            title = FIND_TITLE,
+            subtitle = stringResource(R.string.home_find_sub),
+            look = if (spot != null) FindPrimary else FindQuiet,
+            badge = if (spot != null) stringResource(R.string.home_saved_title) else null,
+            onClick = {
+                if (spot != null) {
+                    onFind()
+                } else {
+                    Toast.makeText(context, R.string.home_no_car, Toast.LENGTH_SHORT).show()
+                }
+            },
+        )
+
         if (spot != null) {
+            Spacer(Modifier.height(18.dp))
             SpotSummary(
                 spot = spot,
                 locating = locating,
                 now = now,
-                onGuide = onGuide,
                 onEdit = onEdit,
                 onOpenPhoto = onOpenPhoto,
                 onShare = onShare,
             )
-        } else {
-            EmptyState(resumeTick = resumeTick, onParked = onParked, onOpenSettings = onOpenSettings)
         }
 
         if (history.isNotEmpty()) {
-            Spacer(Modifier.height(26.dp))
+            Spacer(Modifier.height(22.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 SectionLabel(text = stringResource(R.string.home_previous), modifier = Modifier.weight(1f))
                 TextButton(onClick = onOpenHistory) {
-                    Text(text = stringResource(R.string.home_see_all), color = Smc.Amber, fontSize = 13.sp)
+                    Text(
+                        text = stringResource(R.string.home_see_all),
+                        color = Smc.Blue,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
                 }
             }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -157,14 +242,176 @@ fun HomeScreen(
             }
         }
     }
+
+    if (confirmReplace) {
+        AlertDialog(
+            onDismissRequest = { confirmReplace = false },
+            containerColor = Smc.Surface,
+            title = { Text(text = stringResource(R.string.home_replace_title), fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+            text = { Text(text = stringResource(R.string.home_replace_body), color = Smc.Muted, fontSize = 14.sp) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmReplace = false
+                    startPark()
+                }) {
+                    Text(text = stringResource(R.string.home_replace_confirm), color = Smc.Blue, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmReplace = false }) {
+                    Text(text = stringResource(R.string.action_cancel), color = Smc.Muted)
+                }
+            },
+        )
+    }
 }
 
+/** L'habillage d'une grande carte d'action. */
+private class CardLook(
+    val brush: Brush?,
+    val solid: Color,
+    val glow: Color?,
+    val title: Color,
+    val spiral: Color,
+    val icon: Color,
+    val chevronBackground: Color,
+    val chevron: Color,
+    val subtitle: Color,
+)
+
+private val ParkPrimary = CardLook(
+    brush = Brush.linearGradient(listOf(Smc.BlueLight, Smc.BlueDark)),
+    solid = Smc.Blue,
+    glow = Smc.Blue,
+    title = Color.White,
+    spiral = Color.White,
+    icon = Color.White,
+    chevronBackground = Color.White.copy(alpha = 0.22f),
+    chevron = Color.White,
+    subtitle = Color.White,
+)
+private val ParkQuiet = CardLook(
+    brush = null,
+    solid = Smc.BlueSoft,
+    glow = null,
+    title = Color(0xFF1D4ED8),
+    spiral = Smc.Blue,
+    icon = Color(0xFF1D4ED8),
+    chevronBackground = Color.White,
+    chevron = Color(0xFF1D4ED8),
+    subtitle = Color(0xFF3B4F8F),
+)
+private val FindPrimary = CardLook(
+    brush = Brush.linearGradient(listOf(Smc.VioletLight, Color(0xFF8B5CF6))),
+    solid = Smc.Violet,
+    glow = Smc.Violet,
+    title = Color.White,
+    spiral = Color.White,
+    icon = Color.White,
+    chevronBackground = Color.White.copy(alpha = 0.22f),
+    chevron = Color.White,
+    subtitle = Color.White,
+)
+private val FindQuiet = CardLook(
+    brush = null,
+    solid = Smc.Surface,
+    glow = Color(0x33142850),
+    title = Smc.TextSoft,
+    spiral = Smc.Violet,
+    icon = Color(0xFFA78BFA),
+    chevronBackground = Smc.VioletSoft,
+    chevron = Smc.Violet,
+    subtitle = Smc.Muted,
+)
+
+@Composable
+private fun ActionCard(
+    title: String,
+    subtitle: String,
+    look: CardLook,
+    badge: String?,
+    onClick: () -> Unit,
+) {
+    val glow = look.glow
+    val brush = look.brush
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (glow != null) {
+                    Modifier.shadow(12.dp, SmcBigCardShape, clip = false, ambientColor = glow, spotColor = glow)
+                } else {
+                    Modifier
+                },
+            )
+            .clip(SmcBigCardShape)
+            .then(if (brush != null) Modifier.background(brush) else Modifier.background(look.solid))
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(start = 18.dp, end = 18.dp, top = if (badge != null) 14.dp else 18.dp, bottom = 16.dp),
+    ) {
+        if (badge != null) {
+            Pill(
+                text = badge,
+                background = Smc.SuccessSoft,
+                color = Smc.OnSuccessSoft,
+                modifier = Modifier.align(Alignment.End),
+            )
+            Spacer(Modifier.height(4.dp))
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Spiral(color = look.spiral, modifier = Modifier.size(82.dp))
+            Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_car),
+                    contentDescription = null,
+                    tint = look.icon,
+                    modifier = Modifier.size(30.dp),
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = title,
+                    color = look.title,
+                    fontFamily = Jakarta,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 21.sp,
+                    lineHeight = 23.sp,
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(look.chevronBackground),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = look.chevron,
+                    modifier = Modifier.size(24.dp),
+                )
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = subtitle,
+            color = look.subtitle,
+            fontFamily = Jakarta,
+            fontWeight = FontWeight.Medium,
+            fontSize = 14.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+/** Le résumé de la voiture enregistrée : repères, fiabilité, photo, modifier, partager. */
 @Composable
 private fun SpotSummary(
     spot: ParkingSpot,
     locating: Boolean,
     now: Long,
-    onGuide: () -> Unit,
     onEdit: () -> Unit,
     onOpenPhoto: () -> Unit,
     onShare: () -> Unit,
@@ -172,145 +419,77 @@ private fun SpotSummary(
     val context = LocalContext.current
     val parked = stringResource(R.string.find_parked, SpotText.ago(context, spot.savedAt, now))
     val subtitle = listOf(spot.placeName, parked).filter { it.isNotBlank() }.joinToString(" · ")
+    val garage = SpotText.garageLine(context, spot).ifBlank { stringResource(R.string.saved_no_place) }
 
-    Spacer(Modifier.height(20.dp))
-    SectionLabel(text = stringResource(R.string.home_saved_title))
-    Spacer(Modifier.height(4.dp))
-    Text(text = subtitle, color = Smc.Dim, fontSize = 13.sp)
+    SmcCard(modifier = Modifier.fillMaxWidth()) {
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconTile(icon = painterResource(R.drawable.ic_parking))
+                Spacer(Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = garage,
+                        color = Smc.Text,
+                        fontFamily = Jakarta,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                    )
+                    Text(text = subtitle, color = Smc.Dim, fontSize = 12.sp)
+                }
+            }
 
-    // Niveau en très grand, zone et place à côté.
-    Spacer(Modifier.height(18.dp))
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Min),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Column(
-            modifier = Modifier
-                .widthIn(min = 96.dp)
-                .fillMaxHeight()
-                .clip(SmcShape)
-                .background(Smc.Amber)
-                .padding(horizontal = 18.dp, vertical = 14.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Text(
-                text = stringResource(R.string.level_label).uppercase(),
-                color = Smc.OnAmber,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = tracking(0.16f),
+            Spacer(Modifier.height(12.dp))
+            ReliabilityBar(score = Reliability.score(spot))
+
+            val photoPath = spot.photoPath
+            if (photoPath != null) {
+                Spacer(Modifier.height(12.dp))
+                SpotPhoto(
+                    path = photoPath,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(130.dp)
+                        .clip(SmcShape)
+                        .clickable(onClick = onOpenPhoto),
+                )
+            }
+
+            Spacer(Modifier.height(10.dp))
+            InfoRow(label = stringResource(R.string.home_gps_label), value = gpsText(spot, locating))
+            InfoRow(
+                label = stringResource(R.string.home_saving_label),
+                value = stringResource(
+                    if (spot.auto) R.string.home_saving_auto else R.string.home_saving_manual,
+                    SpotText.clock(context, spot.savedAt),
+                ),
             )
-            Text(
-                text = spot.level.ifBlank { "—" },
-                color = Smc.OnAmber,
-                fontFamily = BarlowCondensed,
-                fontWeight = FontWeight.Bold,
-                fontSize = 52.sp,
-                lineHeight = 54.sp,
-                maxLines = 1,
+            InfoRow(
+                label = stringResource(R.string.home_note_label),
+                value = spot.note.ifBlank { stringResource(R.string.home_note_none) },
+                divider = false,
             )
+
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                GhostButton(
+                    text = stringResource(R.string.home_edit),
+                    onClick = onEdit,
+                    modifier = Modifier.weight(1f),
+                )
+                OutlinedIconButton(
+                    onClick = onShare,
+                    shape = SmcShape,
+                    border = BorderStroke(1.dp, Smc.BorderStrong),
+                    modifier = Modifier.size(48.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Share,
+                        contentDescription = stringResource(R.string.share_title),
+                        tint = Smc.Muted,
+                    )
+                }
+            }
         }
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            ValueTile(label = stringResource(R.string.zone_label), value = spot.zone)
-            ValueTile(label = stringResource(R.string.place_label), value = spot.place)
-        }
-    }
-
-    // Photo de repère.
-    Spacer(Modifier.height(14.dp))
-    val photoPath = spot.photoPath
-    if (photoPath != null) {
-        SpotPhoto(
-            path = photoPath,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(176.dp)
-                .clip(SmcCardShape)
-                .border(1.dp, Smc.Border, SmcCardShape)
-                .clickable(onClick = onOpenPhoto),
-        )
-    } else {
-        PhotoPlaceholder(
-            caption = stringResource(R.string.home_photo_empty),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(176.dp)
-                .clickable(onClick = onEdit),
-        )
-    }
-
-    // Ce qu'on sait de la place.
-    Spacer(Modifier.height(16.dp))
-    InfoRow(label = stringResource(R.string.home_gps_label), value = gpsText(spot, locating))
-    InfoRow(
-        label = stringResource(R.string.home_saving_label),
-        value = stringResource(
-            if (spot.auto) R.string.home_saving_auto else R.string.home_saving_manual,
-            SpotText.clock(context, spot.savedAt),
-        ),
-    )
-    InfoRow(
-        label = stringResource(R.string.home_note_label),
-        value = spot.note.ifBlank { stringResource(R.string.home_note_none) },
-        divider = false,
-    )
-
-    Spacer(Modifier.height(18.dp))
-    AmberButton(
-        text = stringResource(R.string.home_guide),
-        onClick = onGuide,
-        icon = painterResource(R.drawable.ic_navigation),
-    )
-    Spacer(Modifier.height(10.dp))
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        GhostButton(
-            text = stringResource(R.string.home_edit),
-            onClick = onEdit,
-            modifier = Modifier.weight(1f),
-        )
-        OutlinedIconButton(
-            onClick = onShare,
-            shape = SmcShape,
-            border = BorderStroke(1.dp, Smc.BorderStrong),
-            modifier = Modifier.size(48.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Share,
-                contentDescription = stringResource(R.string.share_title),
-                tint = Smc.Muted,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ValueTile(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(SmcShape)
-            .background(Smc.SurfaceHigh)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = label.uppercase(),
-            color = Smc.Dim,
-            fontSize = 12.sp,
-            letterSpacing = tracking(0.14f),
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            text = value.ifBlank { "—" },
-            color = Smc.Text,
-            fontFamily = BarlowCondensed,
-            fontWeight = FontWeight.Bold,
-            fontSize = 30.sp,
-            maxLines = 1,
-        )
     }
 }
 
@@ -324,163 +503,5 @@ private fun gpsText(spot: ParkingSpot, locating: Boolean): String {
         accuracy != null && accuracy > PRECISE_ACCURACY_METERS ->
             stringResource(R.string.gps_short_rough, accuracy.roundToInt())
         else -> stringResource(R.string.gps_short_precise, (accuracy ?: 0f).roundToInt())
-    }
-}
-
-/**
- * Aucune place : un seul geste possible (loi de Hick).
- * Au toucher, l'épingle tombe et une onde part, puis la place est notée.
- */
-@Composable
-private fun EmptyState(resumeTick: Int, onParked: () -> Unit, onOpenSettings: () -> Unit) {
-    val context = LocalContext.current
-    val autoSaveReady = remember(resumeTick) { BluetoothHelper.isAutoSaveReady(context) }
-    var dropping by remember { mutableStateOf(false) }
-    val currentOnParked by rememberUpdatedState(onParked)
-    val pinDrop = remember { Animatable(0f) }
-    val burst = remember { Animatable(0f) }
-
-    // Qu'on accepte ou non la position, la place est notée : sans GPS, niveau et photo font le travail.
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions(),
-    ) { dropping = true }
-
-    LaunchedEffect(dropping) {
-        if (dropping) {
-            pinDrop.snapTo(-1f)
-            pinDrop.animateTo(0f, spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMediumLow))
-            burst.snapTo(0f)
-            burst.animateTo(1f, tween(durationMillis = 420, easing = FastOutSlowInEasing))
-            currentOnParked()
-            dropping = false
-        }
-    }
-
-    val onTap: () -> Unit = {
-        if (!dropping) {
-            if (LocationFetcher.hasForegroundPermission(context)) {
-                dropping = true
-            } else {
-                permissionLauncher.launch(
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-                )
-            }
-        }
-    }
-
-    Spacer(Modifier.height(22.dp))
-    CondensedTitle(text = stringResource(R.string.home_empty_title), size = 40.sp)
-    Spacer(Modifier.height(12.dp))
-    Text(
-        text = stringResource(R.string.home_empty_body),
-        color = Smc.Muted,
-        fontFamily = Barlow,
-        fontSize = 15.5.sp,
-        lineHeight = 24.sp,
-    )
-
-    Spacer(Modifier.height(20.dp))
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(190.dp)
-            .clip(SmcCardShape)
-            .background(Smc.Surface)
-            .border(1.dp, Smc.Border, SmcCardShape)
-            .clickable(onClick = onTap),
-        contentAlignment = Alignment.Center,
-    ) {
-        PinRings(inward = false, modifier = Modifier.size(180.dp))
-        Canvas(modifier = Modifier.size(180.dp)) {
-            val wave = burst.value
-            if (wave > 0f && wave < 1f) {
-                drawCircle(
-                    color = Smc.Amber.copy(alpha = (1f - wave) * 0.5f),
-                    radius = size.minDimension / 2f * wave,
-                    center = Offset(size.width / 2f, size.height / 2f),
-                    style = Stroke(width = 6.dp.toPx()),
-                )
-            }
-        }
-        Icon(
-            imageVector = Icons.Filled.Place,
-            contentDescription = null,
-            tint = Smc.Amber,
-            modifier = Modifier
-                .size(54.dp)
-                .offset(y = (pinDrop.value * 90f - 14f).dp),
-        )
-    }
-
-    Spacer(Modifier.height(18.dp))
-    AmberButton(text = stringResource(R.string.home_save_spot), onClick = onTap)
-
-    Spacer(Modifier.height(8.dp))
-    if (autoSaveReady) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 10.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Dot(color = Smc.Success)
-            Spacer(Modifier.width(8.dp))
-            Text(text = stringResource(R.string.park_auto_on), color = Smc.Muted, fontSize = 13.sp)
-        }
-    } else {
-        TextButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth()) {
-            Icon(
-                painter = painterResource(R.drawable.ic_bluetooth),
-                contentDescription = null,
-                tint = Smc.Amber,
-                modifier = Modifier.size(18.dp),
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(text = stringResource(R.string.park_auto_cta), color = Smc.Amber, fontSize = 14.sp)
-        }
-    }
-}
-
-/** Une ligne d'historique (aussi utilisée sur l'accueil, en version courte). */
-@Composable
-fun HistoryRow(past: PastSpot, compact: Boolean) {
-    val context = LocalContext.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(SmcShape)
-            .background(Smc.Surface)
-            .border(1.dp, Smc.Border, SmcShape)
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(if (compact) 46.dp else 56.dp)
-                .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
-                .hatched(8.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = past.level.ifBlank { "P" },
-                color = Smc.Muted,
-                fontFamily = BarlowCondensed,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-            )
-        }
-        Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = SpotText.historyTitle(context, past), color = Smc.Text, fontSize = 15.sp, maxLines = 1)
-            Text(
-                text = SpotText.day(past.savedAt) + " · " + SpotText.duration(context, past.endedAt - past.savedAt),
-                color = Smc.Dim,
-                fontSize = 12.5.sp,
-            )
-            if (!compact && past.note.isNotBlank()) {
-                Text(text = past.note, color = Smc.Faint, fontSize = 12.5.sp, maxLines = 2)
-            }
-        }
     }
 }

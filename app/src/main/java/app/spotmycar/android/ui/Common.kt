@@ -11,6 +11,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,25 +27,29 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -53,44 +58,58 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.spotmycar.android.R
-import app.spotmycar.android.ui.theme.Barlow
-import app.spotmycar.android.ui.theme.BarlowCondensed
+import app.spotmycar.android.ui.theme.Jakarta
 import app.spotmycar.android.ui.theme.Smc
 import app.spotmycar.android.ui.theme.tracking
 import app.spotmycar.android.util.Photos
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 /*
- * Les briques visuelles du style « sombre technique » : petits titres en
- * capitales espacées, gros chiffres en Barlow Condensed, boutons ambre.
+ * Les briques visuelles du style « clair bleu » (prototype v2) : cartes
+ * blanches très arrondies, bouton principal en dégradé bleu, Plus Jakarta Sans.
  */
 
-val SmcShape = RoundedCornerShape(10.dp)
-val SmcCardShape = RoundedCornerShape(12.dp)
+val SmcShape = RoundedCornerShape(16.dp)
+val SmcCardShape = RoundedCornerShape(20.dp)
+val SmcBigCardShape = RoundedCornerShape(24.dp)
+val SmcPillShape = RoundedCornerShape(999.dp)
 
-/** Petit titre de section : « NIVEAU », « PLACES PRÉCÉDENTES »… */
+/** Ombre douce bleutée des cartes blanches. */
+fun Modifier.softShadow(shape: androidx.compose.ui.graphics.Shape = SmcCardShape, elevation: Dp = 6.dp): Modifier =
+    shadow(elevation, shape, clip = false, ambientColor = Color(0x33142850), spotColor = Color(0x33142850))
+
+/** Petit titre de section : « Étage », « Places précédentes »… */
 @Composable
-fun SectionLabel(text: String, modifier: Modifier = Modifier, color: Color = Smc.Dim) {
+fun SectionLabel(text: String, modifier: Modifier = Modifier, color: Color = Smc.Muted) {
     Text(
-        text = text.uppercase(),
+        text = text,
         modifier = modifier,
         color = color,
-        fontFamily = Barlow,
-        fontSize = 11.5.sp,
-        letterSpacing = tracking(0.16f),
-        fontWeight = FontWeight.Medium,
+        fontFamily = Jakarta,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.SemiBold,
     )
 }
 
-/** Gros titre condensé en capitales : « AUCUNE PLACE ENREGISTRÉE ». */
+/**
+ * Grand titre d'écran. Le nom et les tailles demandées viennent de l'ancien
+ * style (police condensée) : Plus Jakarta Sans est plus large, on réduit.
+ */
 @Composable
 fun CondensedTitle(
     text: String,
@@ -99,64 +118,113 @@ fun CondensedTitle(
     color: Color = Smc.Text,
     textAlign: TextAlign? = null,
 ) {
+    val shown = (size.value * 0.68f).coerceIn(20f, 30f).sp
     Text(
-        text = text.uppercase(),
+        text = text,
         modifier = modifier,
         color = color,
-        fontFamily = BarlowCondensed,
-        fontWeight = FontWeight.Bold,
-        fontSize = size,
-        lineHeight = size * 1.04f,
+        fontFamily = Jakarta,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = shown,
+        lineHeight = shown * 1.2f,
         textAlign = textAlign,
     )
 }
 
-/** Titre de barre d'écran : « RETOUR À LA VOITURE », « NOUVELLE PLACE »… */
+/** Titre de barre d'écran : « Retour à la voiture », « Confirmez l'étage »… */
 @Composable
 fun BarTitle(text: String, modifier: Modifier = Modifier) {
     Text(
-        text = text.uppercase(),
+        text = text,
         modifier = modifier,
         color = Smc.Text,
-        fontFamily = BarlowCondensed,
-        fontWeight = FontWeight.SemiBold,
+        fontFamily = Jakarta,
+        fontWeight = FontWeight.Bold,
         fontSize = 18.sp,
-        letterSpacing = tracking(0.14f),
         maxLines = 1,
     )
 }
 
-/** Le bouton principal ambre (un seul par écran). */
+/** Le logo en toutes lettres : SPOT en foncé, MY en bleu, CAR en foncé (jamais inversé en arabe). */
 @Composable
-fun AmberButton(
+fun Wordmark(size: TextUnit, modifier: Modifier = Modifier) {
+    Text(
+        text = buildAnnotatedString {
+            append("SPOT")
+            withStyle(SpanStyle(color = Smc.Blue)) { append("MY") }
+            append("CAR")
+        },
+        modifier = modifier,
+        color = Smc.Text,
+        fontFamily = Jakarta,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = size,
+        letterSpacing = tracking(0.04f),
+        maxLines = 1,
+    )
+}
+
+/** La spirale du logo (rampe de parking vue de dessus), dessinée et non en image. */
+@Composable
+fun Spiral(color: Color, modifier: Modifier = Modifier, strokeFraction: Float = 0.06f) {
+    val path = remember { Path() }
+    Canvas(modifier = modifier) {
+        val unit = size.minDimension / 100f
+        val cx = size.width / 2f
+        val cy = size.height / 2f
+        path.reset()
+        for (i in 0..220) {
+            val f = i / 220f
+            val angle = f * 2f * PI.toFloat() * 3.2f
+            val radius = (4f + f * 40f) * unit
+            val x = cx + radius * cos(angle)
+            val y = cy + radius * sin(angle)
+            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+        drawPath(
+            path = path,
+            color = color,
+            style = Stroke(width = size.minDimension * strokeFraction, cap = StrokeCap.Round, join = StrokeJoin.Round),
+        )
+    }
+}
+
+/** Le bouton principal en dégradé bleu (un seul par écran). */
+@Composable
+fun PrimaryButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     icon: Painter? = null,
 ) {
-    Button(
-        onClick = onClick,
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp),
-        shape = SmcShape,
-        colors = ButtonDefaults.buttonColors(containerColor = Smc.Amber, contentColor = Smc.OnAmber),
+            .heightIn(min = 54.dp)
+            .shadow(10.dp, SmcShape, clip = false, ambientColor = Smc.Blue, spotColor = Smc.Blue)
+            .clip(SmcShape)
+            .background(Smc.BlueGradient)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
-            Icon(painter = icon, contentDescription = null, modifier = Modifier.size(20.dp))
+            Icon(painter = icon, contentDescription = null, tint = Smc.OnBlue, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(10.dp))
         }
         Text(
-            text = text.uppercase(),
-            fontFamily = BarlowCondensed,
+            text = text,
+            color = Smc.OnBlue,
+            fontFamily = Jakarta,
             fontWeight = FontWeight.SemiBold,
-            fontSize = 17.sp,
-            letterSpacing = tracking(0.06f),
+            fontSize = 16.sp,
+            textAlign = TextAlign.Center,
         )
     }
 }
 
-/** Bouton secondaire : contour gris, texte doux. */
+/** Bouton secondaire : fond blanc, contour fin. */
 @Composable
 fun GhostButton(
     text: String,
@@ -170,39 +238,40 @@ fun GhostButton(
         modifier = modifier.heightIn(min = 48.dp),
         shape = SmcShape,
         border = BorderStroke(1.dp, Smc.BorderStrong),
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = textColor),
+        colors = ButtonDefaults.outlinedButtonColors(containerColor = Smc.Surface, contentColor = textColor),
     ) {
         if (icon != null) {
             Icon(painter = icon, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(10.dp))
         }
-        Text(text = text, fontFamily = Barlow, fontSize = 15.sp)
+        Text(text = text, fontFamily = Jakarta, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
     }
 }
 
-/** Bouton de choix (niveau, zone) : ambre quand il est choisi. */
+/** Bouton de choix (niveau, zone) : bleu quand il est choisi, blanc sinon. */
 @Composable
 fun ChoiceButton(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    androidx.compose.material3.Surface(
+    Surface(
         onClick = onClick,
-        modifier = modifier.heightIn(min = 52.dp),
-        shape = SmcShape,
-        color = if (selected) Smc.Amber else Smc.SurfaceHigh,
-        contentColor = if (selected) Smc.OnAmber else Smc.Muted,
-        border = BorderStroke(1.dp, if (selected) Smc.Amber else Smc.Border),
+        modifier = modifier.heightIn(min = 50.dp),
+        shape = RoundedCornerShape(14.dp),
+        color = if (selected) Smc.Blue else Smc.Surface,
+        contentColor = if (selected) Smc.OnBlue else Smc.Text,
+        border = BorderStroke(1.dp, if (selected) Smc.Blue else Smc.Border),
+        shadowElevation = if (selected) 6.dp else 1.dp,
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
             Text(
                 text = label,
-                fontFamily = BarlowCondensed,
+                fontFamily = Jakarta,
                 fontWeight = FontWeight.Bold,
-                fontSize = 24.sp,
+                fontSize = 16.sp,
             )
         }
     }
 }
 
-/** Carte sombre bordée. */
+/** Carte blanche arrondie, avec une ombre douce. */
 @Composable
 fun SmcCard(
     modifier: Modifier = Modifier,
@@ -211,9 +280,9 @@ fun SmcCard(
 ) {
     Box(
         modifier = modifier
+            .softShadow()
             .clip(SmcCardShape)
             .background(Smc.Surface)
-            .border(1.dp, Smc.Border, SmcCardShape)
             .padding(padding),
     ) { content() }
 }
@@ -225,27 +294,65 @@ fun InfoRow(label: String, value: String, divider: Boolean = true) {
         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
             Text(text = label, color = Smc.Muted, fontSize = 13.sp, modifier = Modifier.weight(1f))
             Spacer(Modifier.width(12.dp))
-            Text(text = value, color = Smc.Text, fontSize = 13.sp, textAlign = TextAlign.End)
+            Text(text = value, color = Smc.Text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End)
         }
         if (divider) HorizontalDivider(color = Smc.Border, modifier = Modifier.padding(top = 4.dp))
     }
 }
 
-/** Interrupteur ambre. */
+/** Interrupteur bleu. */
 @Composable
 fun SmcSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     Switch(
         checked = checked,
         onCheckedChange = onCheckedChange,
         colors = SwitchDefaults.colors(
-            checkedThumbColor = Smc.Text,
-            checkedTrackColor = Smc.Amber,
-            checkedBorderColor = Smc.Amber,
-            uncheckedThumbColor = Smc.Muted,
+            checkedThumbColor = Smc.OnBlue,
+            checkedTrackColor = Smc.Blue,
+            checkedBorderColor = Smc.Blue,
+            uncheckedThumbColor = Smc.Surface,
             uncheckedTrackColor = Smc.Off,
             uncheckedBorderColor = Smc.Off,
         ),
     )
+}
+
+/** Petite tuile carrée arrondie avec une icône (lignes de signaux, de récapitulatif). */
+@Composable
+fun IconTile(
+    icon: Painter,
+    modifier: Modifier = Modifier,
+    background: Color = Smc.SurfaceHigh,
+    tint: Color = Smc.Blue,
+    size: Dp = 34.dp,
+) {
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(RoundedCornerShape(10.dp))
+            .background(background),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(painter = icon, contentDescription = null, tint = tint, modifier = Modifier.size(size * 0.58f))
+    }
+}
+
+/** Étiquette en pilule : « Voiture enregistrée », « Direction fiable »… */
+@Composable
+fun Pill(text: String, background: Color, color: Color, modifier: Modifier = Modifier, dot: Color? = null) {
+    Row(
+        modifier = modifier
+            .clip(SmcPillShape)
+            .background(background)
+            .padding(horizontal = 11.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (dot != null) {
+            Dot(color = dot, size = 7.dp)
+            Spacer(Modifier.width(6.dp))
+        }
+        Text(text = text, color = color, fontFamily = Jakarta, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+    }
 }
 
 /** Fond hachuré du prototype, utilisé quand il n'y a pas encore de photo. */
@@ -317,7 +424,7 @@ fun SpotPhoto(
     }
 }
 
-/** Pastille ronde ambre (ou éteinte). */
+/** Pastille ronde de couleur. */
 @Composable
 fun Dot(color: Color, size: Dp = 8.dp) {
     Box(
@@ -341,10 +448,10 @@ fun TopBar(
             .heightIn(min = 48.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(modifier = Modifier.width(72.dp), verticalAlignment = Alignment.CenterVertically) { start() }
+        Row(modifier = Modifier.width(80.dp), verticalAlignment = Alignment.CenterVertically) { start() }
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) { BarTitle(title) }
         Row(
-            modifier = Modifier.width(72.dp),
+            modifier = Modifier.width(80.dp),
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
         ) { end() }
@@ -352,7 +459,7 @@ fun TopBar(
 }
 
 /**
- * L'animation signature de SpotMyCar (« pin drop ») : des ondes ambre.
+ * L'animation signature de SpotMyCar (« pin drop ») : des ondes bleues (ou violettes pour « retrouver »).
  * [inward] faux : elles partent du centre (on vient de se garer).
  * [inward] vrai : elles reviennent vers le centre (on cherche la voiture).
  */
@@ -360,7 +467,7 @@ fun TopBar(
 fun PinRings(
     inward: Boolean,
     modifier: Modifier = Modifier,
-    color: Color = Smc.Amber,
+    color: Color = Smc.Blue,
     center: @Composable () -> Unit = {},
 ) {
     val transition = rememberInfiniteTransition(label = "rings")
@@ -380,16 +487,16 @@ fun PinRings(
 
 private fun DrawScope.drawRings(progress: Float, inward: Boolean, color: Color) {
     val outer = size.minDimension / 2f
-    val inner = outer * 0.22f
-    for (index in 0 until 3) {
-        val raw = (progress + index / 3f) % 1f
+    val inner = outer * 0.3f
+    for (index in 0 until 4) {
+        val raw = (progress + index / 4f) % 1f
         val p = if (inward) 1f - raw else raw
         val alpha = if (inward) raw * (1f - raw) * 2.4f else (1f - p) * 0.75f
         drawCircle(
             color = color.copy(alpha = alpha.coerceIn(0f, 1f)),
             radius = inner + (outer - inner) * p,
             center = Offset(size.width / 2f, size.height / 2f),
-            style = Stroke(width = 2.5.dp.toPx()),
+            style = Stroke(width = 3.dp.toPx()),
         )
     }
 }

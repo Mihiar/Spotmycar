@@ -45,6 +45,8 @@ data class ParkingSpot(
     val placeName: String = "",
     /** Vrai si la place a été notée par la coupure Bluetooth. */
     val auto: Boolean = false,
+    /** Pression de l'air (hPa) mesurée près de la voiture : sert à estimer l'écart de niveaux au retour. */
+    val pressureHpa: Float? = null,
 ) {
     val hasCoordinates: Boolean
         get() = latitude != null && longitude != null

@@ -78,7 +78,7 @@ object Notifier {
 
         val notification = NotificationCompat.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_stat_pin)
-            .setColor(Smc.Amber.toArgb())
+            .setColor(Smc.Blue.toArgb())
             .setContentTitle(title)
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))

@@ -29,6 +29,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -47,8 +48,7 @@ import androidx.compose.ui.unit.sp
 import app.spotmycar.android.R
 import app.spotmycar.android.data.ParkingSpot
 import app.spotmycar.android.data.ParkingStore
-import app.spotmycar.android.ui.theme.Barlow
-import app.spotmycar.android.ui.theme.BarlowCondensed
+import app.spotmycar.android.ui.theme.Jakarta
 import app.spotmycar.android.ui.theme.Smc
 import app.spotmycar.android.util.Photos
 import app.spotmycar.android.util.SpotText
@@ -70,6 +70,7 @@ fun SaveScreen(
     spot: ParkingSpot,
     isNew: Boolean,
     locating: Boolean,
+    startWithPhoto: Boolean,
     onCancel: (discardNewSpot: Boolean) -> Unit,
     onSaved: () -> Unit,
 ) {
@@ -112,6 +113,15 @@ fun SaveScreen(
         }
     }
 
+    // Arrivée par « Prendre une photo » (mode de secours) : l'appareil photo s'ouvre tout de suite.
+    var photoLaunched by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(startWithPhoto) {
+        if (startWithPhoto && !photoLaunched) {
+            photoLaunched = true
+            onTakePhoto()
+        }
+    }
+
     // Retour système : on garde la place, on oublie seulement les changements.
     BackHandler {
         dropDraftPhoto()
@@ -122,7 +132,7 @@ fun SaveScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 22.dp)
+            .padding(horizontal = 16.dp)
             .padding(top = 8.dp, bottom = 24.dp),
     ) {
         TopBar(
@@ -132,7 +142,7 @@ fun SaveScreen(
                     dropDraftPhoto()
                     onCancel(isNew)
                 }) {
-                    Text(text = stringResource(R.string.action_cancel), color = Smc.Dim, fontSize = 15.sp)
+                    Text(text = stringResource(R.string.action_cancel), color = Smc.Blue, fontSize = 15.sp, maxLines = 1)
                 }
             },
         )
@@ -143,29 +153,28 @@ fun SaveScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(SmcShape)
-                .background(Smc.Surface)
-                .border(1.dp, Smc.Border, SmcShape)
+                .background(Smc.SurfaceHigh)
                 .padding(horizontal = 14.dp, vertical = 11.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Dot(color = Smc.Amber, size = 7.dp)
+            Dot(color = Smc.Blue, size = 7.dp)
             Spacer(Modifier.width(10.dp))
-            Text(text = bannerText(spot, locating), color = Smc.Muted, fontSize = 13.sp)
+            Text(text = bannerText(spot, locating), color = Smc.Muted, fontSize = 13.sp, fontWeight = FontWeight.Medium)
         }
 
         SectionLabel(text = stringResource(R.string.level_label), modifier = Modifier.padding(top = 22.dp, bottom = 10.dp))
         ChoiceRow(options = LEVELS, selected = level, initialIndex = 2) { level = if (level == it) "" else it }
 
-        SectionLabel(text = stringResource(R.string.zone_label), modifier = Modifier.padding(top = 22.dp, bottom = 10.dp))
+        SectionLabel(text = stringResource(R.string.zone_label) + " " + stringResource(R.string.optional), modifier = Modifier.padding(top = 22.dp, bottom = 10.dp))
         ChoiceRow(options = ZONES, selected = zone, initialIndex = 0) { zone = if (zone == it) "" else it }
 
         SectionLabel(text = stringResource(R.string.save_place_number), modifier = Modifier.padding(top = 22.dp, bottom = 10.dp))
         OutlinedTextField(
             value = place,
             onValueChange = { value -> place = value.take(8) },
-            placeholder = { Text("148", color = Smc.Faint, fontFamily = BarlowCondensed, fontSize = 26.sp) },
+            placeholder = { Text("148", color = Smc.Faint, fontFamily = Jakarta, fontSize = 20.sp) },
             singleLine = true,
-            textStyle = TextStyle(fontFamily = BarlowCondensed, fontWeight = FontWeight.Bold, fontSize = 26.sp, color = Smc.Text),
+            textStyle = TextStyle(fontFamily = Jakarta, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Smc.Text),
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Characters,
                 imeAction = ImeAction.Next,
@@ -189,13 +198,14 @@ fun SaveScreen(
             ) {
                 SpotPhoto(path = photo, modifier = Modifier.fillMaxSize())
                 Text(
-                    text = stringResource(R.string.save_photo_added).uppercase(),
+                    text = stringResource(R.string.save_photo_added),
                     color = Smc.Text,
-                    fontSize = 11.5.sp,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .padding(10.dp)
-                        .clip(SmcShape)
-                        .background(Smc.Background.copy(alpha = 0.8f))
+                        .clip(SmcPillShape)
+                        .background(Smc.Surface.copy(alpha = 0.9f))
                         .padding(horizontal = 9.dp, vertical = 6.dp),
                 )
             }
@@ -215,7 +225,7 @@ fun SaveScreen(
             value = note,
             onValueChange = { value -> note = value.take(200) },
             placeholder = { Text(stringResource(R.string.save_note_placeholder), color = Smc.Faint) },
-            textStyle = TextStyle(fontFamily = Barlow, fontSize = 15.5.sp, color = Smc.Text),
+            textStyle = TextStyle(fontFamily = Jakarta, fontSize = 15.5.sp, color = Smc.Text),
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             maxLines = 3,
             shape = SmcShape,
@@ -224,7 +234,7 @@ fun SaveScreen(
         )
 
         Spacer(Modifier.height(24.dp))
-        AmberButton(
+        PrimaryButton(
             text = stringResource(R.string.save_button),
             onClick = {
                 val keptPhoto = draftPhoto
@@ -278,7 +288,7 @@ fun smcFieldColors() = OutlinedTextFieldDefaults.colors(
     unfocusedTextColor = Smc.Text,
     focusedContainerColor = Smc.Surface,
     unfocusedContainerColor = Smc.Surface,
-    focusedBorderColor = Smc.Amber,
+    focusedBorderColor = Smc.Blue,
     unfocusedBorderColor = Smc.Border,
-    cursorColor = Smc.Amber,
+    cursorColor = Smc.Blue,
 )

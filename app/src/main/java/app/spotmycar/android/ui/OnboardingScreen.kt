@@ -40,8 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.spotmycar.android.R
-import app.spotmycar.android.ui.theme.Barlow
-import app.spotmycar.android.ui.theme.BarlowCondensed
+import app.spotmycar.android.ui.theme.Jakarta
 import app.spotmycar.android.ui.theme.Smc
 import app.spotmycar.android.ui.theme.tracking
 
@@ -65,14 +64,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
             .padding(horizontal = 24.dp)
             .padding(top = 20.dp, bottom = 28.dp),
     ) {
-        Text(
-            text = stringResource(R.string.app_name).uppercase(),
-            color = Smc.Amber,
-            fontFamily = BarlowCondensed,
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-            letterSpacing = tracking(0.2f),
-        )
+        Wordmark(size = 19.sp)
 
         AnimatedContent(
             targetState = page,
@@ -88,9 +80,8 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(230.dp)
-                        .clip(SmcCardShape)
-                        .hatched()
-                        .border(1.dp, Smc.BorderStrong, SmcCardShape),
+                        .clip(SmcBigCardShape)
+                        .background(Smc.BlueSoft),
                     contentAlignment = Alignment.Center,
                 ) {
                     when (index) {
@@ -105,7 +96,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                 Text(
                     text = stringResource(PAGES[index].body),
                     color = Smc.Muted,
-                    fontFamily = Barlow,
+                    fontFamily = Jakarta,
                     fontSize = 16.sp,
                     lineHeight = 25.sp,
                     modifier = Modifier.widthIn(max = 320.dp),
@@ -125,7 +116,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                             .width(if (index == page) 22.dp else 6.dp)
                             .height(6.dp)
                             .clip(RoundedCornerShape(99.dp))
-                            .background(if (index == page) Smc.Amber else Smc.Off),
+                            .background(if (index == page) Smc.Blue else Smc.Off),
                     )
                 }
             }
@@ -133,14 +124,13 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                 onClick = { if (last) onFinished() else page += 1 },
                 modifier = Modifier.heightIn(min = 56.dp),
                 shape = SmcShape,
-                colors = ButtonDefaults.buttonColors(containerColor = Smc.Amber, contentColor = Smc.OnAmber),
+                colors = ButtonDefaults.buttonColors(containerColor = Smc.Blue, contentColor = Smc.OnBlue),
             ) {
                 Text(
-                    text = stringResource(if (last) R.string.intro_start else R.string.intro_next).uppercase(),
-                    fontFamily = BarlowCondensed,
+                    text = stringResource(if (last) R.string.intro_start else R.string.intro_next),
+                    fontFamily = Jakarta,
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 17.sp,
-                    letterSpacing = tracking(0.06f),
+                    fontSize = 16.sp,
                     modifier = Modifier.padding(horizontal = 12.dp),
                 )
             }
@@ -156,14 +146,13 @@ private fun IntroBluetooth() {
             modifier = Modifier
                 .size(72.dp)
                 .clip(CircleShape)
-                .background(Smc.SurfaceHigh)
-                .border(1.dp, Smc.BorderStrong, CircleShape),
+                .background(Smc.Surface),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_bluetooth),
                 contentDescription = null,
-                tint = Smc.Amber,
+                tint = Smc.Blue,
                 modifier = Modifier.size(34.dp),
             )
         }
@@ -187,7 +176,7 @@ private fun IntroGuide() {
         Icon(
             painter = painterResource(R.drawable.ic_navigation),
             contentDescription = null,
-            tint = Smc.Amber,
+            tint = Smc.Blue,
             modifier = Modifier.size(64.dp),
         )
     }
@@ -198,23 +187,22 @@ private fun GarageTile(label: String, value: String, highlighted: Boolean) {
     Column(
         modifier = Modifier
             .clip(SmcShape)
-            .background(if (highlighted) Smc.Amber else Smc.SurfaceHigh)
+            .background(if (highlighted) Smc.Blue else Smc.Surface)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = label.uppercase(),
-            color = if (highlighted) Smc.OnAmber else Smc.Dim,
-            fontSize = 11.sp,
+            text = label,
+            color = if (highlighted) Smc.OnBlue else Smc.Dim,
+            fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
-            letterSpacing = tracking(0.16f),
         )
         Text(
             text = value,
-            color = if (highlighted) Smc.OnAmber else Smc.Text,
-            fontFamily = BarlowCondensed,
-            fontWeight = FontWeight.Bold,
-            fontSize = 40.sp,
+            color = if (highlighted) Smc.OnBlue else Smc.Text,
+            fontFamily = Jakarta,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 28.sp,
         )
     }
 }
