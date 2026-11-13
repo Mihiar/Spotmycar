@@ -4,6 +4,8 @@ import android.Manifest
 import android.app.TimePickerDialog
 import android.os.Build
 import android.text.format.DateFormat
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -72,13 +74,15 @@ fun AlertsScreen(spot: ParkingSpot?, resumeTick: Int, onOpenSettings: () -> Unit
     val autoReady = remember(resumeTick, refresh, autoOn) { BluetoothHelper.isAutoSaveReady(context) }
     val canNotify = remember(resumeTick, refresh) { Notifier.canNotify(context) }
 
-    val notificationGate = rememberPermissionGate(Manifest.permission.POST_NOTIFICATIONS) { refresh += 1 }
+    val notificationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { refresh += 1 }
 
     /** Une alerte ne sert à rien sans notifications : on les demande au bon moment. */
     fun ensureNotifications() {
         if (Notifier.canNotify(context)) return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            notificationGate.request()
+            notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else {
             Actions.openAppSettings(context)
         }
@@ -116,7 +120,7 @@ fun AlertsScreen(spot: ParkingSpot?, resumeTick: Int, onOpenSettings: () -> Unit
                         modifier = Modifier
                             .size(30.dp)
                             .clip(RoundedCornerShape(7.dp))
-                            .background(Smc.Blue),
+                            .background(Smc.Accent),
                     )
                     Spacer(Modifier.width(12.dp))
                     Column {
@@ -140,7 +144,7 @@ fun AlertsScreen(spot: ParkingSpot?, resumeTick: Int, onOpenSettings: () -> Unit
         if (!canNotify && (closingOn || durationOn || freeOn || autoOn)) {
             Spacer(Modifier.height(10.dp))
             TextButton(onClick = { ensureNotifications() }) {
-                Text(text = stringResource(R.string.alerts_notifications_off), color = Smc.Blue, fontSize = 13.5.sp)
+                Text(text = stringResource(R.string.alerts_notifications_off), color = Smc.Accent, fontSize = 13.5.sp)
             }
         }
 
@@ -260,7 +264,7 @@ fun AlertsScreen(spot: ParkingSpot?, resumeTick: Int, onOpenSettings: () -> Unit
                             RadioButton(
                                 selected = hours == maxHours,
                                 onClick = null,
-                                colors = RadioButtonDefaults.colors(selectedColor = Smc.Blue),
+                                colors = RadioButtonDefaults.colors(selectedColor = Smc.Accent),
                             )
                             Text(
                                 text = stringResource(R.string.duration_hours, hours),
@@ -323,7 +327,7 @@ private fun AlertRow(
             if (checked) {
                 Text(
                     text = stringResource(R.string.action_edit),
-                    color = Smc.Blue,
+                    color = Smc.Accent,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier

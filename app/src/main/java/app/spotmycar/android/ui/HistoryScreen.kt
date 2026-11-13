@@ -29,7 +29,7 @@ import app.spotmycar.android.R
 import app.spotmycar.android.data.HistoryStore
 import app.spotmycar.android.data.ParkingSpot
 import app.spotmycar.android.data.PastSpot
-import app.spotmycar.android.ui.theme.Jakarta
+import app.spotmycar.android.ui.theme.Outfit
 import app.spotmycar.android.ui.theme.Smc
 import app.spotmycar.android.util.SpotText
 import java.util.Calendar
@@ -107,7 +107,7 @@ fun HistoryScreen(spot: ParkingSpot?, history: List<PastSpot>) {
                 TextButton(onClick = {
                     HistoryStore.clear(context)
                     confirmClear = false
-                }) { Text(stringResource(R.string.history_clear_confirm), color = Smc.Blue) }
+                }) { Text(stringResource(R.string.history_clear_confirm), color = Smc.Accent) }
             },
             dismissButton = {
                 TextButton(onClick = { confirmClear = false }) {
@@ -129,7 +129,7 @@ private fun StatCard(label: String, value: String, caption: String, modifier: Mo
             Text(
                 text = value,
                 color = Smc.Text,
-                fontFamily = Jakarta,
+                fontFamily = Outfit,
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp,
                 lineHeight = 32.sp,

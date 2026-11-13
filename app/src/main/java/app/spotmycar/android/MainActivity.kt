@@ -27,10 +27,10 @@ class MainActivity : ComponentActivity() {
     private val openGuideRequest = mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Thème clair : icônes des barres système foncées sur fond bleu pâle.
+        // Barres système transparentes : icônes foncées en thème clair, claires en thème sombre.
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
+            statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
         ParkingStore.ensureLoaded(this)

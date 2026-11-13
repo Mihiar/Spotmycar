@@ -2,6 +2,8 @@ package app.spotmycar.android.ui
 
 import android.Manifest
 import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -82,21 +84,24 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit, onReplayIntro: () -> Uni
     val notificationsGranted = remember(resumeTick, refresh) { Notifier.canNotify(context) }
     val devices = remember(resumeTick, refresh) { BluetoothHelper.pairedDevices(context) }
 
-    // Après un refus définitif, ces demandes ouvrent d'elles-mêmes les paramètres de l'app.
-    val bluetoothGate = rememberPermissionGate(Manifest.permission.BLUETOOTH_CONNECT) { refresh += 1 }
-    val notificationGate = rememberPermissionGate(Manifest.permission.POST_NOTIFICATIONS) { refresh += 1 }
-    val backgroundGate = rememberPermissionGate(Manifest.permission.ACCESS_BACKGROUND_LOCATION) { refresh += 1 }
+    val bluetoothLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { refresh += 1 }
+    val notificationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { refresh += 1 }
+    val backgroundLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { refresh += 1 }
     // Android impose deux temps : d'abord la position « pendant l'utilisation », puis « toujours ».
-    val foregroundGate = rememberPermissionGate(
-        Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.ACCESS_COARSE_LOCATION,
-    ) { granted ->
+    val foregroundLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { result ->
         refresh += 1
-        if (granted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) backgroundGate.request()
+        if (result.values.any { it } && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            backgroundLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        }
     }
-    val locationGate = if (foregroundGranted) backgroundGate else foregroundGate
-    val allowLabel = stringResource(R.string.action_allow)
-    val openSettingsLabel = stringResource(R.string.action_open_settings)
 
     Column(
         modifier = Modifier
@@ -123,7 +128,7 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit, onReplayIntro: () -> Uni
                 Icon(
                     painter = painterResource(R.drawable.ic_bluetooth),
                     contentDescription = null,
-                    tint = Smc.Blue,
+                    tint = Smc.Accent,
                     modifier = Modifier.size(24.dp),
                 )
                 Spacer(Modifier.width(10.dp))
@@ -160,7 +165,7 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit, onReplayIntro: () -> Uni
                     text = stringResource(if (ready) R.string.auto_active else R.string.auto_incomplete),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (ready) Smc.Success else Smc.Blue,
+                    color = if (ready) Smc.Success else Smc.Accent,
                 )
                 HorizontalDivider(color = Smc.Border)
 
@@ -169,8 +174,8 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit, onReplayIntro: () -> Uni
                     done = bluetoothGranted,
                     title = stringResource(R.string.step_bluetooth_title),
                     description = stringResource(R.string.step_bluetooth_desc),
-                    actionLabel = if (bluetoothGate.blocked) openSettingsLabel else allowLabel,
-                    onAction = bluetoothGate.request,
+                    actionLabel = stringResource(R.string.action_allow),
+                    onAction = { bluetoothLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT) },
                 )
 
                 // Étape 2 : quelle voiture ?
@@ -207,11 +212,8 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit, onReplayIntro: () -> Uni
                     done = backgroundGranted,
                     title = stringResource(R.string.step_location_title),
                     description = stringResource(R.string.step_location_desc),
-                    actionLabel = if (locationGate.blocked) openSettingsLabel else allowLabel,
-                    // L'explication a déjà été lue quand Android ne propose plus que les paramètres.
-                    onAction = {
-                        if (locationGate.blocked) locationGate.request() else showDisclosure = true
-                    },
+                    actionLabel = stringResource(R.string.action_allow),
+                    onAction = { showDisclosure = true },
                 )
 
                 // Étape 4 (facultative) : notification de confirmation.
@@ -219,10 +221,10 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit, onReplayIntro: () -> Uni
                     done = notificationsGranted,
                     title = stringResource(R.string.step_notifications_title),
                     description = stringResource(R.string.step_notifications_desc),
-                    actionLabel = if (notificationGate.blocked) openSettingsLabel else allowLabel,
+                    actionLabel = stringResource(R.string.action_allow),
                     onAction = {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            notificationGate.request()
+                            notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         } else {
                             Actions.openAppSettings(context)
                         }
@@ -279,10 +281,10 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit, onReplayIntro: () -> Uni
                 color = Smc.Muted,
             )
             TextButton(onClick = { Actions.openUrl(context, Actions.PRIVACY_POLICY_URL) }) {
-                Text(text = stringResource(R.string.about_privacy), color = Smc.Blue)
+                Text(text = stringResource(R.string.about_privacy), color = Smc.Accent)
             }
             TextButton(onClick = onReplayIntro) {
-                Text(text = stringResource(R.string.about_replay_intro), color = Smc.Blue)
+                Text(text = stringResource(R.string.about_replay_intro), color = Smc.Accent)
             }
         }
     }
@@ -302,9 +304,14 @@ fun SettingsScreen(resumeTick: Int, onBack: () -> Unit, onReplayIntro: () -> Uni
                     onClick = {
                         showDisclosure = false
                         if (!foregroundGranted) {
-                            foregroundGate.request()
+                            foregroundLauncher.launch(
+                                arrayOf(
+                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                                ),
+                            )
                         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                            backgroundGate.request()
+                            backgroundLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
                         }
                     },
                 ) {
@@ -360,7 +367,7 @@ private fun StepRow(
                 Icon(
                     imageVector = Icons.Filled.Check,
                     contentDescription = null,
-                    tint = Smc.OnBlue,
+                    tint = Smc.OnAccent,
                     modifier = Modifier.size(18.dp),
                 )
             }

@@ -40,7 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.spotmycar.android.R
-import app.spotmycar.android.ui.theme.Jakarta
+import app.spotmycar.android.ui.theme.Outfit
 import app.spotmycar.android.ui.theme.Smc
 import app.spotmycar.android.ui.theme.tracking
 
@@ -81,7 +81,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                         .fillMaxWidth()
                         .height(230.dp)
                         .clip(SmcBigCardShape)
-                        .background(Smc.BlueSoft),
+                        .background(Smc.AccentSoft),
                     contentAlignment = Alignment.Center,
                 ) {
                     when (index) {
@@ -96,7 +96,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                 Text(
                     text = stringResource(PAGES[index].body),
                     color = Smc.Muted,
-                    fontFamily = Jakarta,
+                    fontFamily = Outfit,
                     fontSize = 16.sp,
                     lineHeight = 25.sp,
                     modifier = Modifier.widthIn(max = 320.dp),
@@ -116,7 +116,7 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                             .width(if (index == page) 22.dp else 6.dp)
                             .height(6.dp)
                             .clip(RoundedCornerShape(99.dp))
-                            .background(if (index == page) Smc.Blue else Smc.Off),
+                            .background(if (index == page) Smc.Accent else Smc.Off),
                     )
                 }
             }
@@ -124,11 +124,11 @@ fun OnboardingScreen(onFinished: () -> Unit) {
                 onClick = { if (last) onFinished() else page += 1 },
                 modifier = Modifier.heightIn(min = 56.dp),
                 shape = SmcShape,
-                colors = ButtonDefaults.buttonColors(containerColor = Smc.Blue, contentColor = Smc.OnBlue),
+                colors = ButtonDefaults.buttonColors(containerColor = Smc.Accent, contentColor = Smc.OnAccent),
             ) {
                 Text(
                     text = stringResource(if (last) R.string.intro_start else R.string.intro_next),
-                    fontFamily = Jakarta,
+                    fontFamily = Outfit,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
                     modifier = Modifier.padding(horizontal = 12.dp),
@@ -152,7 +152,7 @@ private fun IntroBluetooth() {
             Icon(
                 painter = painterResource(R.drawable.ic_bluetooth),
                 contentDescription = null,
-                tint = Smc.Blue,
+                tint = Smc.Accent,
                 modifier = Modifier.size(34.dp),
             )
         }
@@ -176,7 +176,7 @@ private fun IntroGuide() {
         Icon(
             painter = painterResource(R.drawable.ic_navigation),
             contentDescription = null,
-            tint = Smc.Blue,
+            tint = Smc.Accent,
             modifier = Modifier.size(64.dp),
         )
     }
@@ -187,20 +187,20 @@ private fun GarageTile(label: String, value: String, highlighted: Boolean) {
     Column(
         modifier = Modifier
             .clip(SmcShape)
-            .background(if (highlighted) Smc.Blue else Smc.Surface)
+            .background(if (highlighted) Smc.Accent else Smc.Surface)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = label,
-            color = if (highlighted) Smc.OnBlue else Smc.Dim,
+            color = if (highlighted) Smc.OnAccent else Smc.Dim,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
         )
         Text(
             text = value,
-            color = if (highlighted) Smc.OnBlue else Smc.Text,
-            fontFamily = Jakarta,
+            color = if (highlighted) Smc.OnAccent else Smc.Text,
+            fontFamily = Outfit,
             fontWeight = FontWeight.ExtraBold,
             fontSize = 28.sp,
         )

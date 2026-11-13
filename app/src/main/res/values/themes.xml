@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Thème clair bleu (prototype v2) : fond bleu très pâle, icônes de barres système foncées. -->
+    <!-- Thème clair terracotta (Spotmy Car) : fond crème, icônes de barres système foncées. -->
     <style name="Theme.SpotMyCar" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>
-        <item name="android:colorAccent">@color/brand_blue</item>
+        <item name="android:colorAccent">@color/brand_accent</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
 </resources>

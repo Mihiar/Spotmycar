@@ -69,7 +69,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.spotmycar.android.R
-import app.spotmycar.android.ui.theme.Jakarta
+import app.spotmycar.android.ui.theme.Outfit
 import app.spotmycar.android.ui.theme.Smc
 import app.spotmycar.android.ui.theme.tracking
 import app.spotmycar.android.util.Photos
@@ -80,18 +80,18 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /*
- * Les briques visuelles du style « clair bleu » (prototype v2) : cartes
- * blanches très arrondies, bouton principal en dégradé bleu, Plus Jakarta Sans.
+ * Les briques visuelles du style « terracotta chaleureux » (Spotmy Car) :
+ * cartes très arrondies (24–28 dp), boutons en pilule, accent terracotta, Outfit.
  */
 
 val SmcShape = RoundedCornerShape(16.dp)
-val SmcCardShape = RoundedCornerShape(20.dp)
-val SmcBigCardShape = RoundedCornerShape(24.dp)
+val SmcCardShape = RoundedCornerShape(24.dp)
+val SmcBigCardShape = RoundedCornerShape(28.dp)
 val SmcPillShape = RoundedCornerShape(999.dp)
 
-/** Ombre douce bleutée des cartes blanches. */
+/** Ombre douce et chaude des cartes. */
 fun Modifier.softShadow(shape: androidx.compose.ui.graphics.Shape = SmcCardShape, elevation: Dp = 6.dp): Modifier =
-    shadow(elevation, shape, clip = false, ambientColor = Color(0x33142850), spotColor = Color(0x33142850))
+    shadow(elevation, shape, clip = false, ambientColor = Smc.Shadow, spotColor = Smc.Shadow)
 
 /** Petit titre de section : « Étage », « Places précédentes »… */
 @Composable
@@ -100,7 +100,7 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier, color: Color = Smc
         text = text,
         modifier = modifier,
         color = color,
-        fontFamily = Jakarta,
+        fontFamily = Outfit,
         fontSize = 14.sp,
         fontWeight = FontWeight.SemiBold,
     )
@@ -108,7 +108,7 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier, color: Color = Smc
 
 /**
  * Grand titre d'écran. Le nom et les tailles demandées viennent de l'ancien
- * style (police condensée) : Plus Jakarta Sans est plus large, on réduit.
+ * style (police condensée) : Outfit est plus large, on réduit.
  */
 @Composable
 fun CondensedTitle(
@@ -123,8 +123,9 @@ fun CondensedTitle(
         text = text,
         modifier = modifier,
         color = color,
-        fontFamily = Jakarta,
-        fontWeight = FontWeight.ExtraBold,
+        fontFamily = Outfit,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = tracking(-0.01f),
         fontSize = shown,
         lineHeight = shown * 1.2f,
         textAlign = textAlign,
@@ -138,25 +139,26 @@ fun BarTitle(text: String, modifier: Modifier = Modifier) {
         text = text,
         modifier = modifier,
         color = Smc.Text,
-        fontFamily = Jakarta,
+        fontFamily = Outfit,
         fontWeight = FontWeight.Bold,
-        fontSize = 18.sp,
+        fontSize = 20.sp,
+        letterSpacing = tracking(-0.01f),
         maxLines = 1,
     )
 }
 
-/** Le logo en toutes lettres : SPOT en foncé, MY en bleu, CAR en foncé (jamais inversé en arabe). */
+/** Le logo en toutes lettres : SPOT en foncé, MY en terracotta, CAR en foncé (jamais inversé en arabe). */
 @Composable
 fun Wordmark(size: TextUnit, modifier: Modifier = Modifier) {
     Text(
         text = buildAnnotatedString {
             append("SPOT")
-            withStyle(SpanStyle(color = Smc.Blue)) { append("MY") }
+            withStyle(SpanStyle(color = Smc.Accent)) { append("MY") }
             append("CAR")
         },
         modifier = modifier,
         color = Smc.Text,
-        fontFamily = Jakarta,
+        fontFamily = Outfit,
         fontWeight = FontWeight.ExtraBold,
         fontSize = size,
         letterSpacing = tracking(0.04f),
@@ -189,7 +191,7 @@ fun Spiral(color: Color, modifier: Modifier = Modifier, strokeFraction: Float = 
     }
 }
 
-/** Le bouton principal en dégradé bleu (un seul par écran). */
+/** Le bouton principal : pilule terracotta, texte brun foncé (un seul par écran). */
 @Composable
 fun PrimaryButton(
     text: String,
@@ -201,22 +203,22 @@ fun PrimaryButton(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 54.dp)
-            .shadow(10.dp, SmcShape, clip = false, ambientColor = Smc.Blue, spotColor = Smc.Blue)
-            .clip(SmcShape)
-            .background(Smc.BlueGradient)
+            .shadow(8.dp, SmcPillShape, clip = false, ambientColor = Smc.Accent, spotColor = Smc.Accent)
+            .clip(SmcPillShape)
+            .background(Smc.Accent)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
-            Icon(painter = icon, contentDescription = null, tint = Smc.OnBlue, modifier = Modifier.size(20.dp))
+            Icon(painter = icon, contentDescription = null, tint = Smc.OnAccent, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(10.dp))
         }
         Text(
             text = text,
-            color = Smc.OnBlue,
-            fontFamily = Jakarta,
+            color = Smc.OnAccent,
+            fontFamily = Outfit,
             fontWeight = FontWeight.SemiBold,
             fontSize = 16.sp,
             textAlign = TextAlign.Center,
@@ -224,7 +226,7 @@ fun PrimaryButton(
     }
 }
 
-/** Bouton secondaire : fond blanc, contour fin. */
+/** Bouton secondaire : pilule transparente, contour fin. */
 @Composable
 fun GhostButton(
     text: String,
@@ -235,35 +237,35 @@ fun GhostButton(
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.heightIn(min = 48.dp),
-        shape = SmcShape,
-        border = BorderStroke(1.dp, Smc.BorderStrong),
-        colors = ButtonDefaults.outlinedButtonColors(containerColor = Smc.Surface, contentColor = textColor),
+        modifier = modifier.heightIn(min = 54.dp),
+        shape = SmcPillShape,
+        border = BorderStroke(1.5.dp, Smc.Border),
+        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Transparent, contentColor = textColor),
     ) {
         if (icon != null) {
             Icon(painter = icon, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(10.dp))
         }
-        Text(text = text, fontFamily = Jakarta, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+        Text(text = text, fontFamily = Outfit, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
     }
 }
 
-/** Bouton de choix (niveau, zone) : bleu quand il est choisi, blanc sinon. */
+/** Bouton de choix (niveau, zone) : terracotta quand il est choisi, surface sinon. */
 @Composable
 fun ChoiceButton(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
         onClick = onClick,
         modifier = modifier.heightIn(min = 50.dp),
         shape = RoundedCornerShape(14.dp),
-        color = if (selected) Smc.Blue else Smc.Surface,
-        contentColor = if (selected) Smc.OnBlue else Smc.Text,
-        border = BorderStroke(1.dp, if (selected) Smc.Blue else Smc.Border),
+        color = if (selected) Smc.Accent else Smc.Surface,
+        contentColor = if (selected) Smc.OnAccent else Smc.Text,
+        border = BorderStroke(1.dp, if (selected) Smc.Accent else Smc.Border),
         shadowElevation = if (selected) 6.dp else 1.dp,
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
             Text(
                 text = label,
-                fontFamily = Jakarta,
+                fontFamily = Outfit,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
             )
@@ -300,16 +302,16 @@ fun InfoRow(label: String, value: String, divider: Boolean = true) {
     }
 }
 
-/** Interrupteur bleu. */
+/** Interrupteur terracotta. */
 @Composable
 fun SmcSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     Switch(
         checked = checked,
         onCheckedChange = onCheckedChange,
         colors = SwitchDefaults.colors(
-            checkedThumbColor = Smc.OnBlue,
-            checkedTrackColor = Smc.Blue,
-            checkedBorderColor = Smc.Blue,
+            checkedThumbColor = Smc.OnAccent,
+            checkedTrackColor = Smc.Accent,
+            checkedBorderColor = Smc.Accent,
             uncheckedThumbColor = Smc.Surface,
             uncheckedTrackColor = Smc.Off,
             uncheckedBorderColor = Smc.Off,
@@ -323,7 +325,7 @@ fun IconTile(
     icon: Painter,
     modifier: Modifier = Modifier,
     background: Color = Smc.SurfaceHigh,
-    tint: Color = Smc.Blue,
+    tint: Color = Smc.Accent,
     size: Dp = 34.dp,
 ) {
     Box(
@@ -351,7 +353,7 @@ fun Pill(text: String, background: Color, color: Color, modifier: Modifier = Mod
             Dot(color = dot, size = 7.dp)
             Spacer(Modifier.width(6.dp))
         }
-        Text(text = text, color = color, fontFamily = Jakarta, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        Text(text = text, color = color, fontFamily = Outfit, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -459,7 +461,7 @@ fun TopBar(
 }
 
 /**
- * L'animation signature de SpotMyCar (« pin drop ») : des ondes bleues (ou violettes pour « retrouver »).
+ * L'animation signature de SpotMyCar (« pin drop ») : des ondes terracotta (ou couleur encre pour « retrouver »).
  * [inward] faux : elles partent du centre (on vient de se garer).
  * [inward] vrai : elles reviennent vers le centre (on cherche la voiture).
  */
@@ -467,7 +469,7 @@ fun TopBar(
 fun PinRings(
     inward: Boolean,
     modifier: Modifier = Modifier,
-    color: Color = Smc.Blue,
+    color: Color = Smc.Accent,
     center: @Composable () -> Unit = {},
 ) {
     val transition = rememberInfiniteTransition(label = "rings")

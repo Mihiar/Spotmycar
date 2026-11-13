@@ -18,7 +18,7 @@ souterrain où le GPS ne passe pas, et qui aide à la retrouver.
 | Marché | Maroc d'abord, puis international | Français, anglais et arabe dès la v1 |
 | Distribution | Lien direct (APK) + Google Play en parallèle | Google impose ~3 semaines à un compte neuf ; le lien direct est disponible tout de suite |
 | Hébergement | GitHub (code, page web, fichier à télécharger) | Gratuit, et l'app n'a aucun serveur à faire tourner |
-| Direction visuelle | « SpotMyCar Prototype v2 » (Claude Design) : thème clair, fond `#F4F7FD`, bleu `#1F6BFF` (garer), violet `#8B6CF6` (retrouver), police Plus Jakarta Sans | Choisie le 13 novembre 2026 ; remplace le prototype 3a « sombre technique » du 12 novembre |
+| Direction visuelle | « Spotmy Car » (Claude Design) : terracotta chaleureux, thèmes clair (fond `#F8F4EE`) et sombre (fond `#1B1714`), accent `#E8794F`, police Outfit (+ JetBrains Mono pour les libellés), boutons en pilule ; guidage « 4c Ligne droite » | Appliquée le 13 novembre 2026 ; remplace « SpotMyCar Prototype v2 » (clair bleu) du même jour |
 | Identifiant de l'app | `app.spotmycar.android` | Définitif une fois publié sur Google Play |
 | Android minimum | Android 8.0 (API 26) ; cible Android 16 (API 36) | API 36 est exigée par Google Play pour toute nouvelle app |
 
@@ -36,27 +36,24 @@ souterrain où le GPS ne passe pas, et qui aide à la retrouver.
    « Direction fiable » ou « Direction estimée · ± N m » pendant le guidage.
 5. **Règle du pic et de la fin.** L'écran « Trouvée ! » clôt le parcours sur une note heureuse.
 6. **Deux gestes sur l'accueil** : « Park my car » et « Find my car ». Celle qui sert est mise
-   en avant (bleue sans voiture enregistrée, violette avec).
-7. **Thème clair bleu**, cartes blanches très arrondies, gros chiffres.
+   en avant (terracotta sans voiture enregistrée, couleur encre avec).
+7. **Terracotta chaleureux, clair et sombre** (suit le réglage du téléphone), cartes très arrondies, gros chiffres.
 
 ## Ce que fait la v1
 
 - **Lancement** : la spirale, le nom, la phrase d'accroche (une seconde et demie).
 - **Introduction** (une fois) : trois pages — la place s'enregistre seule ; niveau, zone, place ; on vous ramène.
-- **Mise en route** (juste après l'introduction) : une autorisation par écran, avec sa raison et un seul bouton —
-  position, choix de la voiture (Bluetooth), position « toujours », notifications. Chaque étape peut être remise à
-  « Plus tard » ; celles déjà réglées ne s'affichent pas.
-- **Refus définitif** : après deux refus, Android n'affiche plus sa fenêtre. L'app le détecte et le bouton ouvre
-  alors directement les paramètres de l'app (mise en route, Réglages, guidage, alertes).
 - **Accueil** (onglet) : les deux grandes cartes « Park my car » et « Find my car ». Avec une voiture
   enregistrée : ses repères, sa fiabilité, la photo, « Modifier la place », partage, et les trois dernières places.
 - **Park** : « Détection automatique » (GPS, Bluetooth de la voiture, baromètre : l'état réel de chaque
   signal) → « Voiture localisée automatiquement » avec le pourcentage de fiabilité, ou « Position
   incertaine » (mode de secours) → « Confirmez l'étage » (niveau, zone, numéro, photo, repère ; tout est
   facultatif) → « Votre voiture est enregistrée ! » avec les sources utilisées.
-- **Find** : « Recherche de votre voiture » (rappel des repères et de la fiabilité) → guidage : des pas
-  mènent vers la voiture, distance en gros, pastille de fiabilité, changement d'étage estimé par le
-  baromètre, itinéraire Google Maps, photo → « Trouvée ! ».
+- **Find** : « Recherche de votre voiture » (rappel des repères et de la fiabilité) → guidage « Ligne droite » :
+  des pas en ligne droite vers une voiture vue de dessus (un pas n'apparaît que là où l'on est déjà passé,
+  la ligne tourne vers la voiture), mètres restants et temps à pied (1,2 m/s), pastille de fiabilité,
+  changement d'étage estimé par le baromètre, itinéraire Google Maps, photo → arrivée : la voiture pulse,
+  ses phares clignotent, le téléphone vibre → « Trouvée ! ».
 - **Historique** (onglet) : places du mois, durée moyenne, liste des places précédentes (sans photo, 50 au plus).
 - **Alertes** (onglet) : parking qui ferme (rappel 15 min avant), durée maximale, stationnement gratuit,
   et l'enregistrement automatique par coupure Bluetooth. Alarmes programmées sur le téléphone.
@@ -85,17 +82,16 @@ app/src/main/java/app/spotmycar/android/
   util/Photos.kt, Actions.kt, SpotText.kt   photos ; cartes, partage ; petites phrases
   location/Barometer.kt        baromètre : pression près de la voiture, écart de niveaux au retour
   location/Reliability.kt      score de fiabilité (0 à 100) et seuil du mode de secours
-  ui/theme/Theme.kt            couleurs et police de la direction « clair bleu » (prototype v2)
+  ui/theme/Theme.kt            palettes claire / sombre et polices de la direction « Spotmy Car » (terracotta)
   ui/Common.kt, Widgets.kt     briques visuelles : boutons, cartes, spirale, lignes de signal, fiabilité
   ui/HomeScreen.kt             accueil : cartes « Park my car » et « Find my car »
   ui/ParkFlowScreens.kt        lancement, détection auto, voiture localisée, mode de secours, enregistrée
   ui/FindScreens.kt            recherche, « Trouvée ! »
-  ui/GuideScreen.kt            guidage par pas, fiabilité, changement d'étage
-  ui/SetupScreen.kt            mise en route : les autorisations, une par écran
-  ui/Permissions.kt            demande d'autorisation qui gère le refus définitif
+  ui/GuideScreen.kt            guidage « Ligne droite » : pas et voiture dessinés, fiabilité, changement d'étage
   ui/…                         Introduction, repères (SaveScreen), Historique, Alertes, Réglages,
                                photo et partage (Overlays.kt)
-app/src/main/res/font/         Plus Jakarta Sans (licence : licenses/PlusJakartaSans-OFL.txt)
+app/src/main/res/font/         Outfit et JetBrains Mono (licences : licenses/Outfit-OFL.txt, licenses/JetBrainsMono-OFL.txt)
+                               (les fichiers Plus Jakarta Sans ne servent plus et peuvent être supprimés)
 app/src/main/res/values*/strings.xml   textes EN / FR / AR (générés par tools/gen_strings.py)
 docs/                          page web + politique de confidentialité (GitHub Pages)
 .github/workflows/build.yml    compilation automatique et publication de l'APK
@@ -106,10 +102,12 @@ docs/                          page web + politique de confidentialité (GitHub 
 - [x] Code de l'app écrit (v1 complète)
 - [x] Page web et politique de confidentialité rédigées
 - [x] Compilation automatique préparée
-- [x] Première compilation réussie sur GitHub (13 nov. 2026)
+- [ ] **Première compilation** (le code n'a pas encore été compilé : à faire sur GitHub)
 - [x] Nouvelle interface : « SpotMyCar Prototype v2 » appliqué (13 nov. 2026) : thème clair bleu, parcours Park / Find,
-      baromètre et score de fiabilité. Compilé ; **pas encore testé sur téléphone.**
-- [x] Mise en route des autorisations et gestion du refus définitif (13 nov. 2026). **Pas encore testé sur téléphone.**
+      baromètre et score de fiabilité. **Pas encore compilé ni testé sur téléphone.**
+- [x] Nouvelle direction : « Spotmy Car » appliquée (13 nov. 2026) : terracotta clair + sombre, Outfit, guidage
+      « 4c Ligne droite ». **Pas encore compilé ni testé sur téléphone.** Minuteur de stationnement (écrans 1a–1c)
+      pas encore fait.
 - [ ] Test sur le Xiaomi : parcours manuel, parking sans GPS, Bluetooth automatique, alertes, boussole,
       baromètre (changement d'étage) et mode de secours
 - [ ] Clé de signature créée et mise à l'abri

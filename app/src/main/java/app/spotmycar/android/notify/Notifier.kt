@@ -14,7 +14,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import app.spotmycar.android.MainActivity
 import app.spotmycar.android.R
-import app.spotmycar.android.ui.theme.Smc
+import app.spotmycar.android.ui.theme.LightPalette
 import androidx.compose.ui.graphics.toArgb
 
 /** Les notifications de l'app : « Place enregistrée » et les alertes de stationnement. */
@@ -78,7 +78,7 @@ object Notifier {
 
         val notification = NotificationCompat.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_stat_pin)
-            .setColor(Smc.Blue.toArgb())
+            .setColor(LightPalette.accent.toArgb())
             .setContentTitle(title)
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))

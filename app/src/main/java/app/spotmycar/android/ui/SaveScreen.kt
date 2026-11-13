@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.sp
 import app.spotmycar.android.R
 import app.spotmycar.android.data.ParkingSpot
 import app.spotmycar.android.data.ParkingStore
-import app.spotmycar.android.ui.theme.Jakarta
+import app.spotmycar.android.ui.theme.Outfit
 import app.spotmycar.android.ui.theme.Smc
 import app.spotmycar.android.util.Photos
 import app.spotmycar.android.util.SpotText
@@ -142,7 +142,7 @@ fun SaveScreen(
                     dropDraftPhoto()
                     onCancel(isNew)
                 }) {
-                    Text(text = stringResource(R.string.action_cancel), color = Smc.Blue, fontSize = 15.sp, maxLines = 1)
+                    Text(text = stringResource(R.string.action_cancel), color = Smc.Accent, fontSize = 15.sp, maxLines = 1)
                 }
             },
         )
@@ -157,7 +157,7 @@ fun SaveScreen(
                 .padding(horizontal = 14.dp, vertical = 11.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Dot(color = Smc.Blue, size = 7.dp)
+            Dot(color = Smc.Accent, size = 7.dp)
             Spacer(Modifier.width(10.dp))
             Text(text = bannerText(spot, locating), color = Smc.Muted, fontSize = 13.sp, fontWeight = FontWeight.Medium)
         }
@@ -172,9 +172,9 @@ fun SaveScreen(
         OutlinedTextField(
             value = place,
             onValueChange = { value -> place = value.take(8) },
-            placeholder = { Text("148", color = Smc.Faint, fontFamily = Jakarta, fontSize = 20.sp) },
+            placeholder = { Text("148", color = Smc.Faint, fontFamily = Outfit, fontSize = 20.sp) },
             singleLine = true,
-            textStyle = TextStyle(fontFamily = Jakarta, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Smc.Text),
+            textStyle = TextStyle(fontFamily = Outfit, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Smc.Text),
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Characters,
                 imeAction = ImeAction.Next,
@@ -225,7 +225,7 @@ fun SaveScreen(
             value = note,
             onValueChange = { value -> note = value.take(200) },
             placeholder = { Text(stringResource(R.string.save_note_placeholder), color = Smc.Faint) },
-            textStyle = TextStyle(fontFamily = Jakarta, fontSize = 15.5.sp, color = Smc.Text),
+            textStyle = TextStyle(fontFamily = Outfit, fontSize = 15.5.sp, color = Smc.Text),
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             maxLines = 3,
             shape = SmcShape,
@@ -288,7 +288,7 @@ fun smcFieldColors() = OutlinedTextFieldDefaults.colors(
     unfocusedTextColor = Smc.Text,
     focusedContainerColor = Smc.Surface,
     unfocusedContainerColor = Smc.Surface,
-    focusedBorderColor = Smc.Blue,
+    focusedBorderColor = Smc.Accent,
     unfocusedBorderColor = Smc.Border,
-    cursorColor = Smc.Blue,
+    cursorColor = Smc.Accent,
 )

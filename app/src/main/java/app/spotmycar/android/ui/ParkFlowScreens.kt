@@ -64,7 +64,7 @@ import app.spotmycar.android.data.LocationSource
 import app.spotmycar.android.data.ParkingSpot
 import app.spotmycar.android.location.LocationFetcher
 import app.spotmycar.android.location.Reliability
-import app.spotmycar.android.ui.theme.Jakarta
+import app.spotmycar.android.ui.theme.Outfit
 import app.spotmycar.android.ui.theme.Smc
 import app.spotmycar.android.util.SpotText
 import kotlinx.coroutines.delay
@@ -90,12 +90,12 @@ fun SplashScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(Color.White, Color(0xFFEAF1FF), Color(0xFFCFE0FF)))),
+            .background(Brush.verticalGradient(listOf(Smc.Background, Smc.SurfaceHigh, Smc.AccentSoft))),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Spiral(
-            color = Smc.Blue,
+            color = Smc.Accent,
             strokeFraction = 0.055f,
             modifier = Modifier
                 .size(120.dp)
@@ -107,7 +107,7 @@ fun SplashScreen() {
         Text(
             text = stringResource(R.string.splash_tagline),
             color = Smc.Dim,
-            fontFamily = Jakarta,
+            fontFamily = Outfit,
             fontSize = 15.sp,
             lineHeight = 22.sp,
             textAlign = TextAlign.Center,
@@ -121,7 +121,7 @@ fun RingsHeader(title: String, subtitle: String, color: Color, soft: Color, inwa
     Text(
         text = title,
         color = Smc.Text,
-        fontFamily = Jakarta,
+        fontFamily = Outfit,
         fontWeight = FontWeight.Bold,
         fontSize = 21.sp,
         lineHeight = 27.sp,
@@ -151,7 +151,7 @@ fun RingsHeader(title: String, subtitle: String, color: Color, soft: Color, inwa
                         .shadow(8.dp, CircleShape, clip = false, ambientColor = color, spotColor = color)
                         .size(70.dp)
                         .clip(CircleShape)
-                        .background(Color.White),
+                        .background(Smc.Surface),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -228,8 +228,8 @@ fun DetectScreen(
         RingsHeader(
             title = stringResource(R.string.detect_title),
             subtitle = stringResource(R.string.detect_sub),
-            color = Smc.Blue,
-            soft = Smc.BlueSoft,
+            color = Smc.Accent,
+            soft = Smc.AccentSoft,
             inward = false,
         )
         Spacer(Modifier.height(10.dp))
@@ -293,21 +293,21 @@ fun LocatedScreen(spot: ParkingSpot, onConfirm: () -> Unit, onCorrect: () -> Uni
         PopBadge(
             icon = rememberVectorPainter(Icons.Filled.Place),
             size = 72.dp,
-            brush = SolidColor(Smc.BlueSoft),
-            tint = Smc.Blue,
+            brush = SolidColor(Smc.AccentSoft),
+            tint = Smc.Accent,
         )
         Spacer(Modifier.height(18.dp))
         PopBadge(
             icon = rememberVectorPainter(Icons.Filled.Check),
             size = 34.dp,
-            brush = SolidColor(Smc.Blue),
-            tint = Color.White,
+            brush = SolidColor(Smc.Accent),
+            tint = Smc.OnAccent,
         )
         Spacer(Modifier.height(10.dp))
         Text(
             text = stringResource(R.string.located_title),
             color = Smc.Text,
-            fontFamily = Jakarta,
+            fontFamily = Outfit,
             fontWeight = FontWeight.Bold,
             fontSize = 20.sp,
             lineHeight = 26.sp,
@@ -326,7 +326,7 @@ fun LocatedScreen(spot: ParkingSpot, onConfirm: () -> Unit, onCorrect: () -> Uni
                     chips.forEach { chip ->
                         Text(
                             text = chip,
-                            color = Color(0xFF1D4ED8),
+                            color = Smc.AccentDeep,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier
@@ -344,7 +344,7 @@ fun LocatedScreen(spot: ParkingSpot, onConfirm: () -> Unit, onCorrect: () -> Uni
         TextButton(onClick = onCorrect, modifier = Modifier.padding(top = 4.dp)) {
             Text(
                 text = stringResource(R.string.located_fix),
-                color = Smc.Blue,
+                color = Smc.Accent,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -373,7 +373,7 @@ fun FallbackScreen(onConfirmLevel: () -> Unit, onTakePhoto: () -> Unit, onSkip: 
         Text(
             text = stringResource(R.string.fallback_title),
             color = Smc.Text,
-            fontFamily = Jakarta,
+            fontFamily = Outfit,
             fontWeight = FontWeight.Bold,
             fontSize = 21.sp,
             textAlign = TextAlign.Center,
@@ -420,7 +420,7 @@ private fun HelpOption(icon: Painter, label: String, detail: String, recommended
             .softShadow(shape, if (recommended) 8.dp else 4.dp)
             .clip(shape)
             .background(Smc.Surface)
-            .border(BorderStroke(2.dp, if (recommended) Smc.Blue else Color.Transparent), shape)
+            .border(BorderStroke(2.dp, if (recommended) Smc.Accent else Color.Transparent), shape)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -433,7 +433,7 @@ private fun HelpOption(icon: Painter, label: String, detail: String, recommended
         }
         if (recommended) {
             Spacer(Modifier.width(8.dp))
-            Pill(text = stringResource(R.string.fallback_quick), background = Smc.Blue, color = Color.White)
+            Pill(text = stringResource(R.string.fallback_quick), background = Smc.Accent, color = Smc.OnAccent)
         }
     }
 }
@@ -462,15 +462,15 @@ fun SavedScreen(spot: ParkingSpot, onDone: () -> Unit) {
         PopBadge(
             icon = rememberVectorPainter(Icons.Filled.Check),
             size = 84.dp,
-            brush = Smc.BlueGradient,
-            tint = Color.White,
-            glow = Smc.Blue,
+            brush = Smc.AccentGradient,
+            tint = Smc.OnAccent,
+            glow = Smc.Accent,
         )
         Spacer(Modifier.height(22.dp))
         Text(
             text = stringResource(R.string.saved_title),
             color = Smc.Text,
-            fontFamily = Jakarta,
+            fontFamily = Outfit,
             fontWeight = FontWeight.Bold,
             fontSize = 21.sp,
             lineHeight = 28.sp,

@@ -59,7 +59,7 @@ import app.spotmycar.android.data.ParkingSpot
 import app.spotmycar.android.data.PastSpot
 import app.spotmycar.android.location.LocationFetcher
 import app.spotmycar.android.location.Reliability
-import app.spotmycar.android.ui.theme.Jakarta
+import app.spotmycar.android.ui.theme.Outfit
 import app.spotmycar.android.ui.theme.Smc
 import app.spotmycar.android.util.SpotText
 import kotlinx.coroutines.delay
@@ -145,7 +145,7 @@ fun HomeScreen(
         Text(
             text = stringResource(R.string.home_question),
             color = Smc.Text,
-            fontFamily = Jakarta,
+            fontFamily = Outfit,
             fontWeight = FontWeight.SemiBold,
             fontSize = 16.sp,
             textAlign = TextAlign.Center,
@@ -184,13 +184,13 @@ fun HomeScreen(
                 Icon(
                     painter = painterResource(R.drawable.ic_bolt),
                     contentDescription = null,
-                    tint = Smc.Blue,
+                    tint = Smc.Accent,
                     modifier = Modifier.size(16.dp),
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(
                     text = stringResource(R.string.home_auto_off),
-                    color = Smc.Blue,
+                    color = Smc.Accent,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -231,7 +231,7 @@ fun HomeScreen(
                 TextButton(onClick = onOpenHistory) {
                     Text(
                         text = stringResource(R.string.home_see_all),
-                        color = Smc.Blue,
+                        color = Smc.Accent,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -254,7 +254,7 @@ fun HomeScreen(
                     confirmReplace = false
                     startPark()
                 }) {
-                    Text(text = stringResource(R.string.home_replace_confirm), color = Smc.Blue, fontWeight = FontWeight.SemiBold)
+                    Text(text = stringResource(R.string.home_replace_confirm), color = Smc.Accent, fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
@@ -279,50 +279,55 @@ private class CardLook(
     val subtitle: Color,
 )
 
-private val ParkPrimary = CardLook(
-    brush = Brush.linearGradient(listOf(Smc.BlueLight, Smc.BlueDark)),
-    solid = Smc.Blue,
-    glow = Smc.Blue,
-    title = Color.White,
-    spiral = Color.White,
-    icon = Color.White,
-    chevronBackground = Color.White.copy(alpha = 0.22f),
-    chevron = Color.White,
-    subtitle = Color.White,
-)
-private val ParkQuiet = CardLook(
-    brush = null,
-    solid = Smc.BlueSoft,
-    glow = null,
-    title = Color(0xFF1D4ED8),
-    spiral = Smc.Blue,
-    icon = Color(0xFF1D4ED8),
-    chevronBackground = Color.White,
-    chevron = Color(0xFF1D4ED8),
-    subtitle = Color(0xFF3B4F8F),
-)
-private val FindPrimary = CardLook(
-    brush = Brush.linearGradient(listOf(Smc.VioletLight, Color(0xFF8B5CF6))),
-    solid = Smc.Violet,
-    glow = Smc.Violet,
-    title = Color.White,
-    spiral = Color.White,
-    icon = Color.White,
-    chevronBackground = Color.White.copy(alpha = 0.22f),
-    chevron = Color.White,
-    subtitle = Color.White,
-)
-private val FindQuiet = CardLook(
-    brush = null,
-    solid = Smc.Surface,
-    glow = Color(0x33142850),
-    title = Smc.TextSoft,
-    spiral = Smc.Violet,
-    icon = Color(0xFFA78BFA),
-    chevronBackground = Smc.VioletSoft,
-    chevron = Smc.Violet,
-    subtitle = Smc.Muted,
-)
+// Des getters, pas des valeurs figées : les couleurs suivent le thème clair / sombre.
+private val ParkPrimary: CardLook
+    get() = CardLook(
+        brush = Smc.AccentGradient,
+        solid = Smc.Accent,
+        glow = Smc.Accent,
+        title = Smc.OnAccent,
+        spiral = Smc.OnAccent,
+        icon = Smc.OnAccent,
+        chevronBackground = Smc.OnAccent.copy(alpha = 0.12f),
+        chevron = Smc.OnAccent,
+        subtitle = Smc.OnAccent.copy(alpha = 0.8f),
+    )
+private val ParkQuiet: CardLook
+    get() = CardLook(
+        brush = null,
+        solid = Smc.AccentSoft,
+        glow = null,
+        title = Smc.AccentDeep,
+        spiral = Smc.Accent,
+        icon = Smc.AccentDeep,
+        chevronBackground = Smc.Surface,
+        chevron = Smc.AccentDeep,
+        subtitle = Smc.Muted,
+    )
+private val FindPrimary: CardLook
+    get() = CardLook(
+        brush = Smc.FindGradient,
+        solid = Smc.Find,
+        glow = Smc.Shadow,
+        title = Smc.OnFind,
+        spiral = Smc.Accent,
+        icon = Smc.OnFind,
+        chevronBackground = Smc.OnFind.copy(alpha = 0.16f),
+        chevron = Smc.OnFind,
+        subtitle = Smc.OnFind.copy(alpha = 0.75f),
+    )
+private val FindQuiet: CardLook
+    get() = CardLook(
+        brush = null,
+        solid = Smc.Surface,
+        glow = Smc.Shadow,
+        title = Smc.TextSoft,
+        spiral = Smc.Find,
+        icon = Smc.Muted,
+        chevronBackground = Smc.FindSoft,
+        chevron = Smc.Find,
+        subtitle = Smc.Muted,
+    )
 
 @Composable
 private fun ActionCard(
@@ -372,7 +377,7 @@ private fun ActionCard(
                 Text(
                     text = title,
                     color = look.title,
-                    fontFamily = Jakarta,
+                    fontFamily = Outfit,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 21.sp,
                     lineHeight = 23.sp,
@@ -397,7 +402,7 @@ private fun ActionCard(
         Text(
             text = subtitle,
             color = look.subtitle,
-            fontFamily = Jakarta,
+            fontFamily = Outfit,
             fontWeight = FontWeight.Medium,
             fontSize = 14.sp,
             textAlign = TextAlign.Center,
@@ -430,7 +435,7 @@ private fun SpotSummary(
                     Text(
                         text = garage,
                         color = Smc.Text,
-                        fontFamily = Jakarta,
+                        fontFamily = Outfit,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                     )

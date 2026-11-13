@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.sp
 import app.spotmycar.android.R
 import app.spotmycar.android.data.PastSpot
 import app.spotmycar.android.location.Reliability
-import app.spotmycar.android.ui.theme.Jakarta
+import app.spotmycar.android.ui.theme.Outfit
 import app.spotmycar.android.ui.theme.Smc
 import app.spotmycar.android.util.SpotText
 
@@ -72,8 +72,8 @@ fun HistoryRow(past: PastSpot, compact: Boolean) {
         ) {
             Text(
                 text = past.level.ifBlank { "P" },
-                color = Smc.Blue,
-                fontFamily = Jakarta,
+                color = Smc.Accent,
+                fontFamily = Outfit,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
             )
@@ -127,7 +127,7 @@ fun ReliabilityBar(score: Int, modifier: Modifier = Modifier) {
             Text(
                 text = stringResource(R.string.percent, (shown * 100f).toInt()),
                 color = color,
-                fontFamily = Jakarta,
+                fontFamily = Outfit,
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 15.sp,
             )
@@ -171,7 +171,7 @@ fun SignalRow(icon: Painter, label: String, detail: String, state: SignalState) 
             tint = when (state) {
                 SignalState.WARN -> Smc.Warn
                 SignalState.NA -> Smc.Faint
-                else -> Smc.Blue
+                else -> Smc.Accent
             },
             size = 32.dp,
         )
@@ -188,7 +188,7 @@ fun SignalRow(icon: Painter, label: String, detail: String, state: SignalState) 
                 .background(
                     when (state) {
                         SignalState.PENDING -> Smc.Border
-                        SignalState.OK -> Smc.Blue
+                        SignalState.OK -> Smc.Accent
                         SignalState.WARN -> Smc.WarnBright
                         SignalState.NA -> Smc.Off
                     },
@@ -196,13 +196,13 @@ fun SignalRow(icon: Painter, label: String, detail: String, state: SignalState) 
             contentAlignment = Alignment.Center,
         ) {
             when (state) {
-                SignalState.OK -> Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
-                SignalState.WARN -> Icon(Icons.Filled.Warning, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
+                SignalState.OK -> Icon(Icons.Filled.Check, contentDescription = null, tint = Smc.OnAccent, modifier = Modifier.size(15.dp))
+                SignalState.WARN -> Icon(Icons.Filled.Warning, contentDescription = null, tint = Smc.OnAccent, modifier = Modifier.size(13.dp))
                 SignalState.PENDING -> Icon(Icons.Filled.MoreVert, contentDescription = null, tint = Smc.Faint, modifier = Modifier.size(14.dp))
                 SignalState.NA -> Box(
                     modifier = Modifier
                         .size(width = 9.dp, height = 2.dp)
-                        .background(Color.White),
+                        .background(Smc.Surface),
                 )
             }
         }
@@ -221,7 +221,7 @@ fun SummaryRow(icon: Painter, text: String, tile: Boolean = true) {
         if (tile) {
             IconTile(icon = icon)
         } else {
-            Icon(painter = icon, contentDescription = null, tint = Smc.Blue, modifier = Modifier.size(22.dp))
+            Icon(painter = icon, contentDescription = null, tint = Smc.Accent, modifier = Modifier.size(22.dp))
         }
         Spacer(Modifier.width(14.dp))
         Text(text = text, color = Smc.Text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
