@@ -1,0 +1,16 @@
+*.iml
+.gradle/
+.idea/
+.kotlin/
+local.properties
+build/
+app/build/
+captures/
+.externalNativeBuild/
+.cxx/
+.DS_Store
+
+# Clés de signature : ne JAMAIS les envoyer sur GitHub
+*.jks
+*.keystore
+keystore.properties
