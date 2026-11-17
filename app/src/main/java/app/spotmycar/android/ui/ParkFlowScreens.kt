@@ -42,8 +42,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -64,7 +66,7 @@ import app.spotmycar.android.data.LocationSource
 import app.spotmycar.android.data.ParkingSpot
 import app.spotmycar.android.location.LocationFetcher
 import app.spotmycar.android.location.Reliability
-import app.spotmycar.android.ui.theme.Outfit
+import app.spotmycar.android.ui.theme.Jakarta
 import app.spotmycar.android.ui.theme.Smc
 import app.spotmycar.android.util.SpotText
 import kotlinx.coroutines.delay
@@ -90,12 +92,12 @@ fun SplashScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(Smc.Background, Smc.SurfaceHigh, Smc.AccentSoft))),
+            .background(Brush.verticalGradient(listOf(Color.White, Color(0xFFEAF1FF), Color(0xFFCFE0FF)))),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Spiral(
-            color = Smc.Accent,
+            color = Smc.Blue,
             strokeFraction = 0.055f,
             modifier = Modifier
                 .size(120.dp)
@@ -107,7 +109,7 @@ fun SplashScreen() {
         Text(
             text = stringResource(R.string.splash_tagline),
             color = Smc.Dim,
-            fontFamily = Outfit,
+            fontFamily = Jakarta,
             fontSize = 15.sp,
             lineHeight = 22.sp,
             textAlign = TextAlign.Center,
@@ -117,11 +119,11 @@ fun SplashScreen() {
 
 /** Les ondes autour de la voiture, avec le titre et le sous-titre au-dessus. */
 @Composable
-fun RingsHeader(title: String, subtitle: String, color: Color, soft: Color, inward: Boolean) {
+fun RingsHeader(title: String, subtitle: String, color: Color, inward: Boolean) {
     Text(
         text = title,
         color = Smc.Text,
-        fontFamily = Outfit,
+        fontFamily = Jakarta,
         fontWeight = FontWeight.Bold,
         fontSize = 21.sp,
         lineHeight = 27.sp,
@@ -139,30 +141,49 @@ fun RingsHeader(title: String, subtitle: String, color: Color, soft: Color, inwa
     Spacer(Modifier.height(10.dp))
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         PinRings(inward = inward, color = color, modifier = Modifier.size(220.dp)) {
-            Box(
-                modifier = Modifier
-                    .size(112.dp)
-                    .clip(CircleShape)
-                    .background(soft),
-                contentAlignment = Alignment.Center,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .shadow(8.dp, CircleShape, clip = false, ambientColor = color, spotColor = color)
-                        .size(70.dp)
-                        .clip(CircleShape)
-                        .background(Smc.Surface),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_car),
-                        contentDescription = null,
-                        tint = color,
-                        modifier = Modifier.size(36.dp),
-                    )
-                }
-            }
+            CoreSpiral(color = color, converge = inward)
         }
+    }
+}
+
+/**
+ * La spirale au centre (prototype v2) : légère, 1,8 tour. À la détection elle tourne ;
+ * à la recherche elle tourne à l'envers et se resserre vers la voiture.
+ */
+@Composable
+private fun CoreSpiral(color: Color, converge: Boolean) {
+    val transition = rememberInfiniteTransition(label = "core")
+    val spin by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(durationMillis = 10_800, easing = LinearEasing), RepeatMode.Restart),
+        label = "core-spin",
+    )
+    val phase by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(durationMillis = 2_200, easing = LinearEasing), RepeatMode.Restart),
+        label = "core-phase",
+    )
+    Box(modifier = Modifier.size(132.dp), contentAlignment = Alignment.Center) {
+        Spiral(
+            color = color,
+            modifier = Modifier
+                .fillMaxSize()
+                .rotate(if (converge) -spin else spin)
+                .scale(if (converge) 1f - 0.55f * phase else 1f)
+                .alpha(if (converge) 0.25f + 0.55f * (1f - phase) else 0.55f),
+            strokeFraction = 0.02f,
+            turns = 1.8f,
+            innerRadius = 6f,
+            outerRadius = 44f,
+        )
+        Icon(
+            painter = painterResource(R.drawable.ic_car),
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(40.dp),
+        )
     }
 }
 
@@ -228,9 +249,8 @@ fun DetectScreen(
         RingsHeader(
             title = stringResource(R.string.detect_title),
             subtitle = stringResource(R.string.detect_sub),
-            color = Smc.Accent,
-            soft = Smc.AccentSoft,
-            inward = false,
+            color = Smc.Blue,
+                inward = false,
         )
         Spacer(Modifier.height(10.dp))
         SmcCard(modifier = Modifier.fillMaxWidth(), padding = 0.dp) {
@@ -293,21 +313,21 @@ fun LocatedScreen(spot: ParkingSpot, onConfirm: () -> Unit, onCorrect: () -> Uni
         PopBadge(
             icon = rememberVectorPainter(Icons.Filled.Place),
             size = 72.dp,
-            brush = SolidColor(Smc.AccentSoft),
-            tint = Smc.Accent,
+            brush = SolidColor(Smc.BlueSoft),
+            tint = Smc.Blue,
         )
         Spacer(Modifier.height(18.dp))
         PopBadge(
             icon = rememberVectorPainter(Icons.Filled.Check),
             size = 34.dp,
-            brush = SolidColor(Smc.Accent),
-            tint = Smc.OnAccent,
+            brush = SolidColor(Smc.Blue),
+            tint = Color.White,
         )
         Spacer(Modifier.height(10.dp))
         Text(
             text = stringResource(R.string.located_title),
             color = Smc.Text,
-            fontFamily = Outfit,
+            fontFamily = Jakarta,
             fontWeight = FontWeight.Bold,
             fontSize = 20.sp,
             lineHeight = 26.sp,
@@ -326,7 +346,7 @@ fun LocatedScreen(spot: ParkingSpot, onConfirm: () -> Unit, onCorrect: () -> Uni
                     chips.forEach { chip ->
                         Text(
                             text = chip,
-                            color = Smc.AccentDeep,
+                            color = Color(0xFF1D4ED8),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier
@@ -344,7 +364,7 @@ fun LocatedScreen(spot: ParkingSpot, onConfirm: () -> Unit, onCorrect: () -> Uni
         TextButton(onClick = onCorrect, modifier = Modifier.padding(top = 4.dp)) {
             Text(
                 text = stringResource(R.string.located_fix),
-                color = Smc.Accent,
+                color = Smc.Blue,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -373,7 +393,7 @@ fun FallbackScreen(onConfirmLevel: () -> Unit, onTakePhoto: () -> Unit, onSkip: 
         Text(
             text = stringResource(R.string.fallback_title),
             color = Smc.Text,
-            fontFamily = Outfit,
+            fontFamily = Jakarta,
             fontWeight = FontWeight.Bold,
             fontSize = 21.sp,
             textAlign = TextAlign.Center,
@@ -420,7 +440,7 @@ private fun HelpOption(icon: Painter, label: String, detail: String, recommended
             .softShadow(shape, if (recommended) 8.dp else 4.dp)
             .clip(shape)
             .background(Smc.Surface)
-            .border(BorderStroke(2.dp, if (recommended) Smc.Accent else Color.Transparent), shape)
+            .border(BorderStroke(2.dp, if (recommended) Smc.Blue else Color.Transparent), shape)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -433,7 +453,7 @@ private fun HelpOption(icon: Painter, label: String, detail: String, recommended
         }
         if (recommended) {
             Spacer(Modifier.width(8.dp))
-            Pill(text = stringResource(R.string.fallback_quick), background = Smc.Accent, color = Smc.OnAccent)
+            Pill(text = stringResource(R.string.fallback_quick), background = Smc.Blue, color = Color.White)
         }
     }
 }
@@ -462,15 +482,15 @@ fun SavedScreen(spot: ParkingSpot, onDone: () -> Unit) {
         PopBadge(
             icon = rememberVectorPainter(Icons.Filled.Check),
             size = 84.dp,
-            brush = Smc.AccentGradient,
-            tint = Smc.OnAccent,
-            glow = Smc.Accent,
+            brush = Smc.BlueGradient,
+            tint = Color.White,
+            glow = Smc.Blue,
         )
         Spacer(Modifier.height(22.dp))
         Text(
             text = stringResource(R.string.saved_title),
             color = Smc.Text,
-            fontFamily = Outfit,
+            fontFamily = Jakarta,
             fontWeight = FontWeight.Bold,
             fontSize = 21.sp,
             lineHeight = 28.sp,
