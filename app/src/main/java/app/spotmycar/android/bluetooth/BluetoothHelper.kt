@@ -14,6 +14,10 @@ import app.spotmycar.android.location.LocationFetcher
 data class PairedDevice(val name: String, val address: String)
 
 object BluetoothHelper {
+    /** Faux sur un téléphone sans Bluetooth : l'enregistrement automatique n'y a pas de sens. */
+    fun isSupported(context: Context): Boolean =
+        context.getSystemService(BluetoothManager::class.java)?.adapter != null
+
     /** À partir d'Android 12, lire les appareils associés demande une autorisation. */
     fun hasConnectPermission(context: Context): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||

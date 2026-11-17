@@ -1,6 +1,6 @@
 # SpotMyCar : document de contexte du projet
 
-> Document vivant. À mettre à jour à chaque décision. Dernière mise à jour : 13 novembre 2026.
+> Document vivant. À mettre à jour à chaque décision. Dernière mise à jour : 16 novembre 2026.
 
 ## En une phrase
 
@@ -43,8 +43,14 @@ souterrain où le GPS ne passe pas, et qui aide à la retrouver.
 
 - **Lancement** : la spirale, le nom, la phrase d'accroche (une seconde et demie).
 - **Introduction** (une fois) : trois pages — la place s'enregistre seule ; niveau, zone, place ; on vous ramène.
-- **Accueil** (onglet) : les deux grandes cartes « Park my car » et « Find my car ». Avec une voiture
-  enregistrée : ses repères, sa fiabilité, la photo, « Modifier la place », partage, et les trois dernières places.
+- **Mise en route** (juste après l'introduction) : une autorisation par écran, avec sa raison et un seul bouton —
+  position, choix de la voiture (Bluetooth), position « toujours », notifications. Chaque étape peut être remise à
+  « Plus tard » ; celles déjà réglées ne s'affichent pas.
+- **Refus définitif** : après deux refus, Android n'affiche plus sa fenêtre. L'app le détecte et le bouton ouvre
+  alors directement les paramètres de l'app (mise en route, Réglages, guidage, alertes).
+- **Accueil** (onglet) : deux grands boutons **ronds**, « Park my car » et « Find my car ». Avec une voiture
+  enregistrée : ses repères, sa fiabilité, la photo, « Modifier la place » et le partage. Les places précédentes
+  ne sont plus sur l'accueil : elles sont dans l'Historique.
 - **Park** : « Détection automatique » (GPS, Bluetooth de la voiture, baromètre : l'état réel de chaque
   signal) → « Voiture localisée automatiquement » avec le pourcentage de fiabilité, ou « Position
   incertaine » (mode de secours) → « Confirmez l'étage » (niveau, zone, numéro, photo, repère ; tout est
@@ -53,12 +59,12 @@ souterrain où le GPS ne passe pas, et qui aide à la retrouver.
   mènent vers la voiture, distance en gros, pastille de fiabilité, changement d'étage estimé par le
   baromètre, itinéraire Google Maps, photo → « Trouvée ! ».
 - **Historique** (onglet) : places du mois, durée moyenne, liste des places précédentes (sans photo, 50 au plus).
-- **Alertes** (onglet) : parking qui ferme (rappel 15 min avant), durée maximale, stationnement gratuit,
-  et l'enregistrement automatique par coupure Bluetooth. Alarmes programmées sur le téléphone.
+- **Réglages** (onglet) : mise en route de l'automatique en étapes à cocher, aide Xiaomi / Oppo / Huawei,
+  politique de confidentialité, revoir l'introduction, et l'entrée **Alertes**.
+- **Alertes** (depuis les Réglages, plus un onglet) : parking qui ferme (rappel 15 min avant), durée maximale,
+  stationnement gratuit, et l'enregistrement automatique par coupure Bluetooth. Alarmes programmées sur le téléphone.
 - **Partage** : message prêt (lien de carte, niveau, zone, place, repère) à copier, ou à envoyer par
   WhatsApp, SMS ou une autre app (avec la photo).
-- **Réglages** : mise en route de l'automatique en étapes à cocher, aide Xiaomi / Oppo / Huawei,
-  politique de confidentialité, revoir l'introduction.
 
 ## Plan des fichiers
 
@@ -86,6 +92,8 @@ app/src/main/java/app/spotmycar/android/
   ui/ParkFlowScreens.kt        lancement, détection auto, voiture localisée, mode de secours, enregistrée
   ui/FindScreens.kt            recherche, « Trouvée ! »
   ui/GuideScreen.kt            guidage par pas, fiabilité, changement d'étage
+  ui/SetupScreen.kt            mise en route : les autorisations, une par écran
+  ui/Permissions.kt            demande d'autorisation qui gère le refus définitif
   ui/…                         Introduction, repères (SaveScreen), Historique, Alertes, Réglages,
                                photo et partage (Overlays.kt)
 app/src/main/res/font/         Plus Jakarta Sans (licence : licenses/PlusJakartaSans-OFL.txt)
@@ -99,9 +107,15 @@ docs/                          page web + politique de confidentialité (GitHub 
 - [x] Code de l'app écrit (v1 complète)
 - [x] Page web et politique de confidentialité rédigées
 - [x] Compilation automatique préparée
-- [ ] **Première compilation** (le code n'a pas encore été compilé : à faire sur GitHub)
+- [x] Première compilation réussie sur GitHub (13 nov. 2026)
 - [x] Nouvelle interface : « SpotMyCar Prototype v2 » appliqué (13 nov. 2026) : thème clair bleu, parcours Park / Find,
-      baromètre et score de fiabilité. **Pas encore compilé ni testé sur téléphone.**
+      baromètre et score de fiabilité. Compilé ; **pas encore testé sur téléphone.**
+- [x] Mise en route des autorisations et gestion du refus définitif (13 nov. 2026). **Pas encore testé sur téléphone.**
+- [x] Dépôt remis en ordre (16 nov. 2026) : les fichiers envoyés en vrac à la racine cassaient la compilation ;
+      la dernière version qui compilait a été rétablie, avec la nouvelle spirale.
+- [x] Accueil à boutons ronds, historique retiré de l'accueil, troisième onglet = Réglages (16 nov. 2026).
+      **Pas encore testé sur téléphone.**
+- [x] Page web aux couleurs du thème bleu ; bouton de téléchargement relié au dépôt (16 nov. 2026)
 - [ ] Test sur le Xiaomi : parcours manuel, parking sans GPS, Bluetooth automatique, alertes, boussole,
       baromètre (changement d'étage) et mode de secours
 - [ ] Clé de signature créée et mise à l'abri
@@ -133,7 +147,11 @@ docs/                          page web + politique de confidentialité (GitHub 
   de plus, et aucune carte des Wi-Fi de parking n'existe), le scan de QR code ou de pilier, et les photos
   d'illustration (remplacées par des dessins). Les pas du guidage sont une animation qui indique la
   direction ; ils ne comptent pas les vrais pas.
-- **Page web** (`docs/`) : encore aux couleurs de l'ancien style sombre.
+- **Page web** (`docs/`) : aux couleurs du thème bleu. Elle n'est pas encore en ligne : il faut activer
+  GitHub Pages (voir `LANCEMENT.md`). Son bouton pointe vers la dernière version publiée, qui n'existe
+  qu'après la v1.0.0.
+- **Envoi de fichiers sur GitHub** : ne jamais déposer les fichiers en vrac à la racine du dépôt
+  (« Add files via upload ») : chaque fichier a son dossier, sinon la compilation casse.
 
 ## Pour modifier un texte de l'app
 
@@ -142,3 +160,7 @@ Modifier la table dans `tools/gen_strings.py`, puis lancer :
 ```
 python3 tools/gen_strings.py app/src/main/res
 ```
+
+## Lancer l'app
+
+Les étapes qui restent, dans l'ordre, sont dans [LANCEMENT.md](LANCEMENT.md).

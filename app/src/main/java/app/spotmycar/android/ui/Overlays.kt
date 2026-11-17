@@ -163,7 +163,7 @@ fun ShareSheet(spot: ParkingSpot, onClose: () -> Unit) {
                         copied = true
                     },
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Smc.Accent, contentColor = Smc.OnAccent),
+                    colors = ButtonDefaults.buttonColors(containerColor = Smc.Blue, contentColor = Smc.OnBlue),
                 ) {
                     Text(
                         text = stringResource(if (copied) R.string.share_copied else R.string.share_copy),
@@ -230,10 +230,10 @@ fun BottomTabs(current: Screen, onSelect: (Screen) -> Unit) {
             listOf(
                 Screen.HOME to R.string.tab_car,
                 Screen.HISTORY to R.string.tab_history,
-                Screen.ALERTS to R.string.tab_alerts,
+                Screen.SETTINGS to R.string.settings_title,
             ).forEach { (target, label) ->
                 val selected = target == current
-                val color = if (selected) Smc.Accent else Smc.Faint
+                val color = if (selected) Smc.Blue else Smc.Faint
                 Column(
                     modifier = Modifier
                         .weight(1f)

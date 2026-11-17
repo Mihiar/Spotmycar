@@ -49,7 +49,7 @@ import androidx.compose.ui.unit.sp
 import app.spotmycar.android.R
 import app.spotmycar.android.data.ParkingSpot
 import app.spotmycar.android.location.Reliability
-import app.spotmycar.android.ui.theme.Outfit
+import app.spotmycar.android.ui.theme.Jakarta
 import app.spotmycar.android.ui.theme.Smc
 import app.spotmycar.android.util.SpotText
 import kotlinx.coroutines.delay
@@ -95,8 +95,7 @@ fun FindScreen(spot: ParkingSpot, onFinished: () -> Unit) {
         RingsHeader(
             title = stringResource(R.string.find_title),
             subtitle = stringResource(R.string.find_sub),
-            color = Smc.Find,
-            soft = Smc.FindSoft,
+            color = Smc.Violet,
             inward = true,
         )
         Spacer(Modifier.height(10.dp))
@@ -141,7 +140,7 @@ fun FindScreen(spot: ParkingSpot, onFinished: () -> Unit) {
 }
 
 private val CONFETTI_COLORS = listOf(
-    Color(0xFFE8794F), Color(0xFFC45A33), Color(0xFFFFD98A), Color(0xFFF5B79A), Color(0xFF4A8FD8),
+    Color(0xFF1F6BFF), Color(0xFF8B6CF6), Color(0xFF60A5FA), Color(0xFFC4B5FD), Color(0xFF1D4ED8),
 )
 
 /** « Trouvée ! » : la fin heureuse (règle du pic et de la fin), avec quelques confettis. */
@@ -190,16 +189,16 @@ fun ArrivedScreen(spot: ParkingSpot, onDone: () -> Unit, onParkAnother: () -> Un
             Box(
                 modifier = Modifier
                     .scale(pop)
-                    .shadow(16.dp, CircleShape, clip = false, ambientColor = Smc.Accent, spotColor = Smc.Accent)
+                    .shadow(16.dp, CircleShape, clip = false, ambientColor = Smc.Blue, spotColor = Smc.Blue)
                     .size(150.dp)
                     .clip(CircleShape)
-                    .background(Smc.AccentSoft),
+                    .background(Smc.BlueSoft),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_car),
                     contentDescription = null,
-                    tint = Smc.Accent,
+                    tint = Smc.Blue,
                     modifier = Modifier.size(84.dp),
                 )
             }
@@ -209,7 +208,7 @@ fun ArrivedScreen(spot: ParkingSpot, onDone: () -> Unit, onParkAnother: () -> Un
         Text(
             text = stringResource(R.string.arrived_title),
             color = Smc.Text,
-            fontFamily = Outfit,
+            fontFamily = Jakarta,
             fontWeight = FontWeight.ExtraBold,
             fontSize = 30.sp,
         )
@@ -248,7 +247,7 @@ fun ArrivedScreen(spot: ParkingSpot, onDone: () -> Unit, onParkAnother: () -> Un
         TextButton(onClick = onParkAnother, modifier = Modifier.padding(top = 6.dp)) {
             Text(
                 text = stringResource(R.string.arrived_new),
-                color = Smc.Accent,
+                color = Smc.Blue,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
             )

@@ -1,11 +1,13 @@
 package app.spotmycar.android.ui
 
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import android.Manifest
 import android.app.TimePickerDialog
 import android.os.Build
 import android.text.format.DateFormat
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -57,7 +59,7 @@ private val DURATION_CHOICES = listOf(1, 2, 3, 4, 6, 8, 12)
 
 /** Onglet « Alertes » : quatre rappels simples, tous facultatifs. */
 @Composable
-fun AlertsScreen(spot: ParkingSpot?, resumeTick: Int, onOpenSettings: () -> Unit) {
+fun AlertsScreen(spot: ParkingSpot?, resumeTick: Int, onBack: () -> Unit, onOpenSettings: () -> Unit) {
     val context = LocalContext.current
     val settings = remember { AppSettings(context) }
 
@@ -74,15 +76,13 @@ fun AlertsScreen(spot: ParkingSpot?, resumeTick: Int, onOpenSettings: () -> Unit
     val autoReady = remember(resumeTick, refresh, autoOn) { BluetoothHelper.isAutoSaveReady(context) }
     val canNotify = remember(resumeTick, refresh) { Notifier.canNotify(context) }
 
-    val notificationLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { refresh += 1 }
+    val notificationGate = rememberPermissionGate(Manifest.permission.POST_NOTIFICATIONS) { refresh += 1 }
 
     /** Une alerte ne sert à rien sans notifications : on les demande au bon moment. */
     fun ensureNotifications() {
         if (Notifier.canNotify(context)) return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            notificationGate.request()
         } else {
             Actions.openAppSettings(context)
         }
@@ -105,8 +105,16 @@ fun AlertsScreen(spot: ParkingSpot?, resumeTick: Int, onOpenSettings: () -> Unit
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 22.dp)
-            .padding(top = 20.dp, bottom = 24.dp),
+            .padding(top = 8.dp, bottom = 24.dp),
     ) {
+        // Les alertes ne sont plus un onglet : on y vient depuis les Réglages, et on y retourne.
+        IconButton(onClick = onBack) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(R.string.action_back),
+                tint = Smc.Muted,
+            )
+        }
         CondensedTitle(text = stringResource(R.string.alerts_title), size = 40.sp)
 
         // Aperçu de ce qui s'affichera sur l'écran verrouillé.
@@ -120,7 +128,7 @@ fun AlertsScreen(spot: ParkingSpot?, resumeTick: Int, onOpenSettings: () -> Unit
                         modifier = Modifier
                             .size(30.dp)
                             .clip(RoundedCornerShape(7.dp))
-                            .background(Smc.Accent),
+                            .background(Smc.Blue),
                     )
                     Spacer(Modifier.width(12.dp))
                     Column {
@@ -144,7 +152,7 @@ fun AlertsScreen(spot: ParkingSpot?, resumeTick: Int, onOpenSettings: () -> Unit
         if (!canNotify && (closingOn || durationOn || freeOn || autoOn)) {
             Spacer(Modifier.height(10.dp))
             TextButton(onClick = { ensureNotifications() }) {
-                Text(text = stringResource(R.string.alerts_notifications_off), color = Smc.Accent, fontSize = 13.5.sp)
+                Text(text = stringResource(R.string.alerts_notifications_off), color = Smc.Blue, fontSize = 13.5.sp)
             }
         }
 
@@ -264,7 +272,7 @@ fun AlertsScreen(spot: ParkingSpot?, resumeTick: Int, onOpenSettings: () -> Unit
                             RadioButton(
                                 selected = hours == maxHours,
                                 onClick = null,
-                                colors = RadioButtonDefaults.colors(selectedColor = Smc.Accent),
+                                colors = RadioButtonDefaults.colors(selectedColor = Smc.Blue),
                             )
                             Text(
                                 text = stringResource(R.string.duration_hours, hours),
@@ -327,7 +335,7 @@ private fun AlertRow(
             if (checked) {
                 Text(
                     text = stringResource(R.string.action_edit),
-                    color = Smc.Accent,
+                    color = Smc.Blue,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier

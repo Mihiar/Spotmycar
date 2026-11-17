@@ -34,7 +34,7 @@ import kotlinx.coroutines.launch
 
 /** Les écrans de l'app (parcours du prototype v2, plus Historique, Alertes et Réglages). */
 enum class Screen {
-    SPLASH, ONBOARDING, HOME, HISTORY, ALERTS,
+    SPLASH, ONBOARDING, SETUP, HOME, HISTORY, ALERTS,
     DETECT, LOCATED, FALLBACK, SAVE, SAVED,
     FIND, GUIDE, ARRIVED,
     SETTINGS,
@@ -47,11 +47,12 @@ private val SPOT_SCREENS = setOf(
 )
 
 /** Les trois onglets du bas. */
-private val TAB_SCREENS = setOf(Screen.HOME, Screen.HISTORY, Screen.ALERTS)
+private val TAB_SCREENS = setOf(Screen.HOME, Screen.HISTORY, Screen.SETTINGS)
 
 /**
  * Chef d'orchestre : décide quel écran montrer.
- * Lancement → Introduction (une fois) → Accueil / Historique / Alertes (onglets).
+ * Lancement → Introduction (une fois) → Mise en route (les autorisations, une par écran)
+ * → Accueil / Historique / Réglages (onglets). Les alertes s'ouvrent depuis les Réglages.
  * « Park » : Détection auto → Voiture localisée (ou Mode de secours → repères) → Enregistrée.
  * « Find » : Recherche → Guidage → Trouvée !
  * Par-dessus : Réglages, photo, partage.
@@ -270,9 +271,12 @@ fun SpotMyCarRoot(
                         Screen.ONBOARDING -> OnboardingScreen(
                             onFinished = {
                                 settings.onboardingDone = true
-                                screen = Screen.HOME
+                                // Les autorisations qui manquent sont proposées tout de suite, une par écran.
+                                screen = if (Setup.firstPending(context, settings) != null) Screen.SETUP else Screen.HOME
                             },
                         )
+
+                        Screen.SETUP -> SetupScreen(resumeTick = resumeTick, onFinished = goHome)
 
                         Screen.HOME -> HomeScreen(
                             spot = spot,
@@ -297,6 +301,7 @@ fun SpotMyCarRoot(
                         Screen.ALERTS -> AlertsScreen(
                             spot = spot,
                             resumeTick = resumeTick,
+                            onBack = { screen = Screen.SETTINGS },
                             onOpenSettings = { screen = Screen.SETTINGS },
                         )
 
@@ -318,6 +323,7 @@ fun SpotMyCarRoot(
                         Screen.GUIDE -> shownSpot?.let { parked ->
                             GuideScreen(
                                 spot = parked,
+                                resumeTick = resumeTick,
                                 onBack = goHome,
                                 onOpenPhoto = { photoOpen = true },
                                 onArrived = { screen = Screen.ARRIVED },
@@ -326,7 +332,7 @@ fun SpotMyCarRoot(
 
                         Screen.SETTINGS -> SettingsScreen(
                             resumeTick = resumeTick,
-                            onBack = goHome,
+                            onOpenAlerts = { screen = Screen.ALERTS },
                             onReplayIntro = {
                                 settings.onboardingDone = false
                                 screen = Screen.ONBOARDING
