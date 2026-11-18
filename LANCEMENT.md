@@ -40,6 +40,7 @@ Avant de tester l'automatique, deux réglages propres à Xiaomi (sinon le télé
 - [ ] Bluetooth : couper le contact de la voiture, vérifier la notification « Place enregistrée ».
 - [ ] Bluetooth après un redémarrage du téléphone, app jamais ouverte depuis.
 - [ ] « Find my car » : la boussole pointe du bon côté, la distance diminue en marchant.
+- [ ] Podomètre **en sous-sol** : toucher « Compter mes pas sous terre », accepter ; sans GPS, la distance baisse à chaque pas et « Sans GPS : distance estimée avec vos pas » s'affiche.
 - [ ] Changement d'étage (baromètre) : monter ou descendre d'un niveau, lire l'estimation.
 - [ ] Alertes (Réglages > Alertes) : une alerte de durée réglée à quelques minutes sonne bien.
 - [ ] Partage WhatsApp : le message et la photo arrivent.

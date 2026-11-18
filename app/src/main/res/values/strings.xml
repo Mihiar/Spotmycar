@@ -254,6 +254,8 @@
     <string name="guide_floor_source">Estimated by the barometer</string>
     <string name="guide_floor_now">Current level (estimated)</string>
     <string name="guide_floor_car">Car level</string>
+    <string name="guide_allow_steps">Count my steps underground</string>
+    <string name="guide_steps_active">No GPS: distance estimated from your steps</string>
     <string name="arrived_title">Found!</string>
     <string name="arrived_body">Your car is here.</string>
     <string name="arrived_new">Save another car</string>

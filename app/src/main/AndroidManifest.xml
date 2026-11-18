@@ -17,10 +17,16 @@
     <!-- Notifications : confirmation d'enregistrement automatique et alertes de stationnement. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Podomètre : compter les pas pendant le guidage, quand le GPS ne passe plus (sous terre). -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+
     <!-- Reprogrammer les alertes après un redémarrage du téléphone. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- Rien n'est obligatoire : l'app reste installable sur tous les téléphones. -->
+    <uses-feature
+        android:name="android.hardware.sensor.stepdetector"
+        android:required="false" />
     <uses-feature
         android:name="android.hardware.bluetooth"
         android:required="false" />
