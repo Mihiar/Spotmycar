@@ -1,6 +1,6 @@
 # SpotMyCar : document de contexte du projet
 
-> Document vivant. À mettre à jour à chaque décision. Dernière mise à jour : 16 novembre 2026.
+> Document vivant. À mettre à jour à chaque décision. Dernière mise à jour : 18 novembre 2026.
 
 ## En une phrase
 
@@ -21,6 +21,7 @@ souterrain où le GPS ne passe pas, et qui aide à la retrouver.
 | Direction visuelle | « SpotMyCar Prototype v2 » (Claude Design) : thème clair, fond `#F4F7FD`, bleu `#1F6BFF` (garer), violet `#8B6CF6` (retrouver), police Plus Jakarta Sans | Choisie le 13 novembre 2026 ; remplace le prototype 3a « sombre technique » du 12 novembre |
 | Identifiant de l'app | `app.spotmycar.android` | Définitif une fois publié sur Google Play |
 | Android minimum | Android 8.0 (API 26) ; cible Android 16 (API 36) | API 36 est exigée par Google Play pour toute nouvelle app |
+| Podomètre | v1 : les pas font baisser la distance pendant le guidage quand le GPS ne passe plus (≈ 0,7 m par pas). v1.1 : enregistrer le trajet voiture → sortie et le refaire à l'envers | Décidé le 18 novembre 2026 : petit et sûr pour le lancement ; le trajet complet est la grande mise à jour suivante |
 
 ## Principes du produit
 
@@ -57,7 +58,7 @@ souterrain où le GPS ne passe pas, et qui aide à la retrouver.
   facultatif) → « Votre voiture est enregistrée ! » avec les sources utilisées.
 - **Find** : « Recherche de votre voiture » (rappel des repères et de la fiabilité) → guidage : des pas
   mènent vers la voiture, distance en gros, pastille de fiabilité, changement d'étage estimé par le
-  baromètre, itinéraire Google Maps, photo → « Trouvée ! ».
+  baromètre, podomètre sous terre (la distance baisse à chaque pas sans GPS), itinéraire Google Maps, photo → « Trouvée ! ».
 - **Historique** (onglet) : places du mois, durée moyenne, liste des places précédentes (sans photo, 50 au plus).
 - **Réglages** (onglet) : mise en route de l'automatique en étapes à cocher, aide Xiaomi / Oppo / Huawei,
   politique de confidentialité, revoir l'introduction, et l'entrée **Alertes**.
@@ -84,6 +85,7 @@ app/src/main/java/app/spotmycar/android/
   alerts/AlertReceiver.kt      affiche l'alerte ; reprogramme après redémarrage
   notify/Notifier.kt           notifications
   util/Photos.kt, Actions.kt, SpotText.kt   photos ; cartes, partage ; petites phrases
+  location/StepCounter.kt      podomètre : un pas ≈ 0,7 m dans la direction de la boussole, sans GPS
   location/Barometer.kt        baromètre : pression près de la voiture, écart de niveaux au retour
   location/Reliability.kt      score de fiabilité (0 à 100) et seuil du mode de secours
   ui/theme/Theme.kt            couleurs et police de la direction « clair bleu » (prototype v2)

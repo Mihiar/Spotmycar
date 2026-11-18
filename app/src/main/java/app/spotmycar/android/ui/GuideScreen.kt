@@ -65,6 +65,7 @@ import app.spotmycar.android.location.Barometer
 import app.spotmycar.android.location.Guidance
 import app.spotmycar.android.location.LocationFetcher
 import app.spotmycar.android.location.Reliability
+import app.spotmycar.android.location.StepCounter
 import app.spotmycar.android.ui.theme.Jakarta
 import app.spotmycar.android.ui.theme.Smc
 import app.spotmycar.android.util.Actions
@@ -104,16 +105,47 @@ fun GuideScreen(
         Manifest.permission.ACCESS_COARSE_LOCATION,
     ) { permissionTick += 1 }
 
+    // Podomètre : disponible sur ce téléphone, et autorisé (« Activité physique ») ?
+    val stepsAvailable = remember { StepCounter.isAvailable(context) }
+    var stepPermissionTick by remember { mutableIntStateOf(0) }
+    val stepsGranted = remember(stepPermissionTick, resumeTick) { StepCounter.hasPermission(context) }
+    val stepGate = rememberPermissionGate(Manifest.permission.ACTIVITY_RECOGNITION) { stepPermissionTick += 1 }
+
+    /** Position actuelle : celle du GPS, ou celle estimée avec les pas quand le GPS est moins précis. */
     var here by remember { mutableStateOf<Location?>(null) }
+    /** Vrai quand la position vient des pas (sous terre, GPS absent ou trop imprécis). */
+    var fromSteps by remember { mutableStateOf(false) }
     var heading by remember { mutableStateOf<Float?>(null) }
     /** Niveaux à monter (positif) ou à descendre (négatif), d'après le baromètre. */
     var levels by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(hasPermission, spot.hasCoordinates) {
-        if (hasPermission && spot.hasCoordinates) Guidance.liveLocation(context).collect { here = it }
+        if (hasPermission && spot.hasCoordinates) {
+            Guidance.liveLocation(context).collect { fix ->
+                // Le GPS reprend la main dès qu'il est au moins aussi précis que l'estimation par les pas.
+                val estimate = here
+                if (!fromSteps || estimate == null || fix.accuracy <= estimate.accuracy) {
+                    here = fix
+                    fromSteps = false
+                }
+            }
+        }
     }
     LaunchedEffect(spot.hasCoordinates) {
         if (spot.hasCoordinates) Guidance.heading(context).collect { heading = it }
+    }
+    // Chaque pas avance la position d'environ 0,7 m dans la direction où pointe le téléphone.
+    LaunchedEffect(stepsGranted, spot.hasCoordinates) {
+        if (stepsGranted && spot.hasCoordinates) {
+            StepCounter.steps(context).collect {
+                val start = here
+                val compass = heading
+                if (start != null && compass != null) {
+                    here = StepCounter.stepFrom(start, compass + Guidance.declination(start))
+                    fromSteps = true
+                }
+            }
+        }
     }
     // Baromètre : comparaison avec la mesure prise près de la voiture, tant qu'elle est récente
     // (au-delà de quelques heures, la météo fausse la comparaison).
@@ -262,6 +294,26 @@ fun GuideScreen(
             GhostButton(
                 text = stringResource(R.string.guide_allow_location),
                 onClick = locationGate.request,
+                textColor = Smc.Blue,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        // Sans GPS, la distance continue de baisser grâce aux pas.
+        if (fromSteps && !arrived) {
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = stringResource(R.string.guide_steps_active),
+                color = Smc.Dim,
+                fontSize = 13.sp,
+                textAlign = TextAlign.Center,
+            )
+        }
+        if (spot.hasCoordinates && hasPermission && stepsAvailable && !stepsGranted) {
+            Spacer(Modifier.height(14.dp))
+            GhostButton(
+                text = stringResource(R.string.guide_allow_steps),
+                onClick = stepGate.request,
                 textColor = Smc.Blue,
                 modifier = Modifier.fillMaxWidth(),
             )

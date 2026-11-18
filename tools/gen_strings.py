@@ -273,6 +273,8 @@ S = [
  ("guide_floor_source", "Estimated by the barometer", "Estimé par le baromètre", "تقدير بواسطة البارومتر"),
  ("guide_floor_now", "Current level (estimated)", "Niveau actuel (estimé)", "الطابق الحالي (تقديري)"),
  ("guide_floor_car", "Car level", "Niveau de la voiture", "طابق السيارة"),
+ ("guide_allow_steps", "Count my steps underground", "Compter mes pas sous terre", "احسب خطواتي تحت الأرض"),
+ ("guide_steps_active", "No GPS: distance estimated from your steps", "Sans GPS : distance estimée avec vos pas", "بدون GPS: المسافة مقدّرة من خطواتك"),
  ("arrived_title", "Found!", "Trouvée !", "وجدتها!"),
  ("arrived_body", "Your car is here.", "Votre voiture est ici.", "سيارتك هنا."),
  ("arrived_new", "Save another car", "Enregistrer une autre voiture", "تسجيل سيارة أخرى"),

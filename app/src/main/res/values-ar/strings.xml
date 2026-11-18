@@ -253,6 +253,8 @@
     <string name="guide_floor_source">تقدير بواسطة البارومتر</string>
     <string name="guide_floor_now">الطابق الحالي (تقديري)</string>
     <string name="guide_floor_car">طابق السيارة</string>
+    <string name="guide_allow_steps">احسب خطواتي تحت الأرض</string>
+    <string name="guide_steps_active">بدون GPS: المسافة مقدّرة من خطواتك</string>
     <string name="arrived_title">وجدتها!</string>
     <string name="arrived_body">سيارتك هنا.</string>
     <string name="arrived_new">تسجيل سيارة أخرى</string>

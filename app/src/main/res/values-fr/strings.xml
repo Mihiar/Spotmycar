@@ -253,6 +253,8 @@
     <string name="guide_floor_source">Estimé par le baromètre</string>
     <string name="guide_floor_now">Niveau actuel (estimé)</string>
     <string name="guide_floor_car">Niveau de la voiture</string>
+    <string name="guide_allow_steps">Compter mes pas sous terre</string>
+    <string name="guide_steps_active">Sans GPS : distance estimée avec vos pas</string>
     <string name="arrived_title">Trouvée !</string>
     <string name="arrived_body">Votre voiture est ici.</string>
     <string name="arrived_new">Enregistrer une autre voiture</string>
