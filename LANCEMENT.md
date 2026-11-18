@@ -87,7 +87,7 @@ Le fichier pour Google Play (`SpotMyCar.aab`) est dans **Actions >** la compilat
 ## 4. Mettre la page web en ligne
 
 Dépôt > **Settings > Pages** > Source : **Deploy from a branch** > Branche `main`, dossier `/docs` > **Save**.
-Adresse : <https://mihiar.github.io/spotmycar/>. Politique de confidentialité : `…/spotmycar/privacy.html`
+Adresse : <https://mihiar.github.io/Spotmycar/>. Politique de confidentialité : `…/Spotmycar/privacy.html`
 (Google Play demande cette adresse).
 
 À décider avant : une **adresse e-mail publique de contact**. Google Play en exige une, et la politique de
