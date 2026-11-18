@@ -15,8 +15,8 @@ import java.util.Locale
 
 /** Tout ce qui ouvre une autre application : cartes, partage, réglages du téléphone. */
 object Actions {
-    /** À compléter avec l'adresse définitive de la page (GitHub Pages). */
-    const val PRIVACY_POLICY_URL = "https://spotmycar.example/privacy.html"
+    /** Page publiée par GitHub Pages depuis le dossier docs/ (Settings > Pages). */
+    const val PRIVACY_POLICY_URL = "https://mihiar.github.io/Spotmycar/privacy.html"
 
     private fun coordinates(spot: ParkingSpot): String? {
         val lat = spot.latitude ?: return null
