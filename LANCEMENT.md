@@ -90,9 +90,7 @@ Dépôt > **Settings > Pages** > Source : **Deploy from a branch** > Branche `ma
 Adresse : <https://mihiar.github.io/Spotmycar/>. Politique de confidentialité : `…/Spotmycar/privacy.html`
 (Google Play demande cette adresse).
 
-À décider avant : une **adresse e-mail publique de contact**. Google Play en exige une, et la politique de
-confidentialité doit dire comment te joindre. Une adresse dédiée (par exemple créée pour SpotMyCar) évite
-d'exposer ta boîte personnelle. Elle se règle dans `docs/index.html` et `docs/privacy.html` (`contactEmail`).
+Adresse e-mail publique de contact : **mihiars@gmail.com** (choisie le 18 novembre 2026), réglée dans `docs/index.html` et `docs/privacy.html` (`contactEmail`).
 
 ## 5. Relecture de l'arabe
 
