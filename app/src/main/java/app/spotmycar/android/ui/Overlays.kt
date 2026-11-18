@@ -176,7 +176,7 @@ fun ShareSheet(spot: ParkingSpot, onClose: () -> Unit) {
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 ShareTarget(label = stringResource(R.string.share_whatsapp), modifier = Modifier.weight(1f)) {
-                    if (!Actions.shareToWhatsApp(context, message)) {
+                    if (!Actions.shareToWhatsApp(context, spot)) {
                         Toast.makeText(context, R.string.share_whatsapp_missing, Toast.LENGTH_SHORT).show()
                     }
                 }

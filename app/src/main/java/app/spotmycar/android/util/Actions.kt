@@ -60,8 +60,11 @@ object Actions {
         }
     }
 
-    /** Partage la place (texte et photo) avec l'application de son choix. */
-    fun share(context: Context, spot: ParkingSpot) {
+    /**
+     * Le message à envoyer : texte seul, ou photo de la place avec le texte en légende.
+     * Si la photo manque ou n'est pas lisible, on envoie le texte seul.
+     */
+    private fun shareIntent(context: Context, spot: ParkingSpot): Intent {
         val send = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, shareText(context, spot))
@@ -78,19 +81,18 @@ object Actions {
                 // Photo introuvable par le FileProvider : on partage le texte seul.
             }
         }
-        start(context, Intent.createChooser(send, context.getString(R.string.share_chooser)))
+        return send
     }
 
-    /** Envoie le message par WhatsApp (ou WhatsApp Business). @return faux si absent. */
-    fun shareToWhatsApp(context: Context, text: String): Boolean =
+    /** Partage la place (texte et photo) avec l'application de son choix. */
+    fun share(context: Context, spot: ParkingSpot) {
+        start(context, Intent.createChooser(shareIntent(context, spot), context.getString(R.string.share_chooser)))
+    }
+
+    /** Envoie la place par WhatsApp (ou WhatsApp Business), photo comprise. @return faux si absent. */
+    fun shareToWhatsApp(context: Context, spot: ParkingSpot): Boolean =
         listOf("com.whatsapp", "com.whatsapp.w4b").any { pkg ->
-            start(
-                context,
-                Intent(Intent.ACTION_SEND)
-                    .setType("text/plain")
-                    .putExtra(Intent.EXTRA_TEXT, text)
-                    .setPackage(pkg),
-            )
+            start(context, shareIntent(context, spot).setPackage(pkg))
         }
 
     /** Ouvre un SMS prêt à envoyer. */
