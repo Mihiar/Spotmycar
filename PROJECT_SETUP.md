@@ -52,13 +52,15 @@ souterrain où le GPS ne passe pas, et qui aide à la retrouver.
   alors directement les paramètres de l'app (mise en route, Réglages, guidage, alertes).
 - **Accueil** (onglet) : deux grands boutons **ronds**, « Park my car » et « Find my car ». Avec une voiture
   enregistrée : ses repères, sa fiabilité, la photo, « Modifier la place » et le partage. Les places précédentes
-  ne sont plus sur l'accueil : elles sont dans l'Historique.
+  ne sont plus sur l'accueil : elles sont dans l'Historique. Seule exception (26 nov. 2026) : quand aucune
+  voiture n'est enregistrée, l'accueil montre le **dernier stationnement** (une seule ligne) ; tous les autres sont dans l'Historique.
 - **Park** : « Détection automatique » (GPS, Bluetooth de la voiture, baromètre : l'état réel de chaque
   signal) → « Voiture localisée automatiquement » avec le pourcentage de fiabilité, ou « Position
   incertaine » (mode de secours) → « Confirmez l'étage » (niveau, zone, numéro, photo, repère ; tout est
   facultatif) → « Votre voiture est enregistrée ! » avec les sources utilisées.
-- **Find** : « Recherche de votre voiture » (rappel des repères et de la fiabilité) → guidage : des pas
-  mènent vers la voiture, distance en gros, pastille de fiabilité, changement d'étage estimé par le
+- **Find** : directement le guidage (l'écran « Recherche de votre voiture » est retiré le 26 nov. 2026) : des pas
+  mènent vers la voiture, distance en gros, aucun message technique (recherche, GPS, précision estimée) ;
+  seule la pastille « Direction fiable » quand c'est le cas, changement d'étage estimé par le
   baromètre, podomètre sous terre (la distance baisse à chaque pas sans GPS), itinéraire Google Maps, photo → « Trouvée ! ».
 - **Historique** (onglet) : places du mois, durée moyenne, liste des places précédentes (sans photo, 50 au plus).
 - **Réglages** (onglet) : mise en route de l'automatique en étapes à cocher, aide Xiaomi / Oppo / Huawei,

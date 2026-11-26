@@ -216,7 +216,36 @@ fun HomeScreen(
                 onShare = onShare,
             )
         }
-        // Les places précédentes ne sont plus ici : elles vivent dans l'onglet Historique.
+        // Sur l'accueil, seulement le dernier stationnement ; tous les autres sont dans l'onglet Historique.
+        val last = history.firstOrNull()
+        if (spot == null && last != null) {
+            Spacer(Modifier.height(18.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.home_last_parking),
+                    color = Smc.Text,
+                    fontFamily = Jakarta,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                if (history.size > 1) {
+                    TextButton(onClick = onOpenHistory) {
+                        Text(
+                            text = stringResource(R.string.home_see_all),
+                            color = Smc.Blue,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+            HistoryRow(past = last, compact = true)
+        }
     }
 
     if (confirmReplace) {

@@ -12,7 +12,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,7 +45,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -249,31 +247,14 @@ fun GuideScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
             )
         }
-        Spacer(Modifier.height(8.dp))
-        when {
-            !spot.hasCoordinates -> Pill(
-                text = stringResource(R.string.guide_conf_landmarks),
-                background = Smc.WarnSoft,
-                color = Smc.OnWarnSoft,
-                dot = Smc.WarnBright,
-            )
-            uncertainty == null -> Pill(
-                text = stringResource(if (hasPermission) R.string.guide_locating else R.string.guide_need_location),
-                background = Smc.WarnSoft,
-                color = Smc.OnWarnSoft,
-                dot = Smc.WarnBright,
-            )
-            reliable -> Pill(
+        // Pas de messages techniques (recherche, GPS, précision estimée) : seulement une bonne nouvelle.
+        if (reliable && !arrived) {
+            Spacer(Modifier.height(8.dp))
+            Pill(
                 text = stringResource(R.string.guide_conf_high),
                 background = Smc.SuccessSoft,
                 color = Smc.OnSuccessSoft,
                 dot = Smc.Success,
-            )
-            else -> Pill(
-                text = stringResource(R.string.guide_conf_est, uncertainty.roundToInt()),
-                background = Smc.WarnSoft,
-                color = Smc.OnWarnSoft,
-                dot = Smc.WarnBright,
             )
         }
 
@@ -292,15 +273,17 @@ fun GuideScreen(
             }
         }
 
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = distance?.let { (if (reliable) "" else "≈ ") + formatDistance(it) } ?: "—",
-            color = Smc.Text,
-            fontFamily = Jakarta,
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 44.sp,
-            lineHeight = 48.sp,
-        )
+        if (distance != null) {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = formatDistance(distance),
+                color = Smc.Text,
+                fontFamily = Jakarta,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 44.sp,
+                lineHeight = 48.sp,
+            )
+        }
         Text(
             text = guideStatus(spot, hasPermission, position, bearing, arrived, compass != null),
             color = Smc.Muted,
@@ -318,23 +301,6 @@ fun GuideScreen(
             )
         }
 
-        // D'où vient la position : pas, approximative, ou trop vague (les repères prennent le relais).
-        val sourceHint = when {
-            estimate == null || arrived -> null
-            estimate?.usable == false -> R.string.guide_too_vague
-            estimate?.source == PositionFusion.Source.STEPS -> R.string.guide_steps_active
-            estimate?.source == PositionFusion.Source.APPROXIMATE -> R.string.guide_approximate
-            else -> null
-        }
-        if (sourceHint != null) {
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = stringResource(sourceHint),
-                color = Smc.Dim,
-                fontSize = 13.sp,
-                textAlign = TextAlign.Center,
-            )
-        }
         if (spot.hasCoordinates && hasPermission && stepsAvailable && !stepsGranted) {
             Spacer(Modifier.height(14.dp))
             GhostButton(
@@ -594,9 +560,9 @@ private fun guideStatus(
     arrived: Boolean,
     hasCompass: Boolean,
 ): String = when {
-    !spot.hasCoordinates -> stringResource(R.string.guide_no_gps)
+    !spot.hasCoordinates -> stringResource(R.string.guide_follow_landmarks)
     !hasPermission -> stringResource(R.string.guide_need_location)
-    position == null || bearing == null -> stringResource(R.string.guide_locating)
+    position == null || bearing == null -> stringResource(R.string.guide_follow_landmarks)
     arrived -> stringResource(R.string.guide_arrived)
     hasCompass -> stringResource(R.string.guide_follow_steps)
     else -> stringResource(R.string.guide_direction_no_compass, stringResource(DIRECTIONS[Guidance.octant(bearing)]))

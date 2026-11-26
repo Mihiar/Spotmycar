@@ -46,7 +46,8 @@ Avant de tester l'automatique, deux réglages propres à Xiaomi (sinon le télé
 - [ ] Changement d'étage (baromètre) : monter ou descendre d'un niveau, lire l'estimation.
 - [ ] Alertes (Réglages > Alertes) : une alerte de durée réglée à quelques minutes sonne bien.
 - [ ] Partage WhatsApp : le message et la photo arrivent.
-- [ ] Onglets : Ma voiture, Historique, Réglages. L'historique n'apparaît plus sur l'accueil.
+- [ ] Onglets : Ma voiture, Historique, Réglages. Sur l'accueil, seulement le **dernier stationnement** (après « Je suis à ma voiture ») ; « Tout voir » ouvre l'Historique avec les autres.
+- [ ] « Find my car » ouvre directement le guidage, sans message technique (recherche, GPS, « environ », précision estimée).
 
 Pour chaque souci : une capture d'écran et une phrase. Claude corrige à partir de là.
 
