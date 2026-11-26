@@ -36,14 +36,14 @@ import kotlinx.coroutines.launch
 enum class Screen {
     SPLASH, ONBOARDING, SETUP, HOME, HISTORY, ALERTS,
     DETECT, LOCATED, FALLBACK, SAVE, SAVED,
-    FIND, GUIDE, ARRIVED,
+    GUIDE, ARRIVED,
     SETTINGS,
 }
 
 /** Les écrans qui n'ont de sens que s'il y a une voiture enregistrée. */
 private val SPOT_SCREENS = setOf(
     Screen.DETECT, Screen.LOCATED, Screen.FALLBACK, Screen.SAVE, Screen.SAVED,
-    Screen.FIND, Screen.GUIDE, Screen.ARRIVED,
+    Screen.GUIDE, Screen.ARRIVED,
 )
 
 /** Les trois onglets du bas. */
@@ -247,13 +247,6 @@ fun SpotMyCarRoot(
                             SavedScreen(spot = parked, onDone = goHome)
                         }
 
-                        Screen.FIND -> shownSpot?.let { parked ->
-                            FindScreen(
-                                spot = parked,
-                                onFinished = { if (screen == Screen.FIND) screen = Screen.GUIDE },
-                            )
-                        }
-
                         Screen.ARRIVED -> shownSpot?.let { parked ->
                             ArrivedScreen(
                                 spot = parked,
@@ -284,7 +277,7 @@ fun SpotMyCarRoot(
                             history = history,
                             resumeTick = resumeTick,
                             onParked = onParked,
-                            onFind = { screen = Screen.FIND },
+                            onFind = { screen = Screen.GUIDE },
                             onEdit = {
                                 saveIsNew = false
                                 saveWithPhoto = false

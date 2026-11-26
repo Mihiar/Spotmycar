@@ -12,7 +12,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,7 +45,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -60,10 +58,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.spotmycar.android.R
+import app.spotmycar.android.data.AppSettings
 import app.spotmycar.android.data.ParkingSpot
 import app.spotmycar.android.location.Barometer
 import app.spotmycar.android.location.Guidance
 import app.spotmycar.android.location.LocationFetcher
+import app.spotmycar.android.location.PositionFusion
 import app.spotmycar.android.location.Reliability
 import app.spotmycar.android.location.StepCounter
 import app.spotmycar.android.ui.theme.Jakarta
@@ -111,39 +111,49 @@ fun GuideScreen(
     val stepsGranted = remember(stepPermissionTick, resumeTick) { StepCounter.hasPermission(context) }
     val stepGate = rememberPermissionGate(Manifest.permission.ACTIVITY_RECOGNITION) { stepPermissionTick += 1 }
 
-    /** Position actuelle : celle du GPS, ou celle estimée avec les pas quand le GPS est moins précis. */
-    var here by remember { mutableStateOf<Location?>(null) }
-    /** Vrai quand la position vient des pas (sous terre, GPS absent ou trop imprécis). */
-    var fromSteps by remember { mutableStateOf(false) }
+    /**
+     * Où suis-je ? Une cascade du plus sûr au moins sûr (GPS précis, puis les pas,
+     * puis une position approximative) : voir [PositionFusion].
+     */
+    val settings = remember { AppSettings(context) }
+    val fusion = remember { PositionFusion(settings.strideMeters) }
+    var estimate by remember { mutableStateOf<PositionFusion.Estimate?>(null) }
     var heading by remember { mutableStateOf<Float?>(null) }
     /** Niveaux à monter (positif) ou à descendre (négatif), d'après le baromètre. */
     var levels by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(hasPermission, spot.hasCoordinates) {
         if (hasPermission && spot.hasCoordinates) {
-            Guidance.liveLocation(context).collect { fix ->
-                // Le GPS reprend la main dès qu'il est au moins aussi précis que l'estimation par les pas.
-                val estimate = here
-                if (!fromSteps || estimate == null || fix.accuracy <= estimate.accuracy) {
-                    here = fix
-                    fromSteps = false
-                }
+            // Point de départ immédiat, même déjà sous terre : la dernière position connue,
+            // si elle est récente. Le GPS la remplace dès qu'il répond.
+            Guidance.lastKnown(context)?.let { last ->
+                if (fusion.onLastKnown(Guidance.toFusionFix(last))) estimate = fusion.current
+            }
+            Guidance.liveLocation(context).collect { location ->
+                val strideBefore = fusion.stride
+                if (fusion.onFix(Guidance.toFusionFix(location))) estimate = fusion.current
+                // La longueur du pas a été mesurée dehors : on la garde pour les prochaines fois.
+                if (fusion.stride != strideBefore) settings.strideMeters = fusion.stride
             }
         }
     }
     LaunchedEffect(spot.hasCoordinates) {
         if (spot.hasCoordinates) Guidance.heading(context).collect { heading = it }
     }
-    // Chaque pas avance la position d'environ 0,7 m dans la direction où pointe le téléphone.
+    // Chaque pas avance la position dans la direction où pointe le téléphone.
     LaunchedEffect(stepsGranted, spot.hasCoordinates) {
         if (stepsGranted && spot.hasCoordinates) {
             StepCounter.steps(context).collect {
-                val start = here
-                val compass = heading
-                if (start != null && compass != null) {
-                    here = StepCounter.stepFrom(start, compass + Guidance.declination(start))
-                    fromSteps = true
+                val compass = heading ?: return@collect
+                val start = estimate
+                val north = if (start != null) {
+                    compass + Guidance.declination(
+                        Location("fusion").apply { latitude = start.latitude; longitude = start.longitude },
+                    )
+                } else {
+                    compass
                 }
+                if (fusion.onStep(north)) estimate = fusion.current
             }
         }
     }
@@ -167,7 +177,14 @@ fun GuideScreen(
         val lng = spot.longitude
         if (lat != null && lng != null) Location("spot").apply { latitude = lat; longitude = lng } else null
     }
-    val position = here
+    // Trop vague (plus de 60 m) : on n'annonce ni distance ni direction, les repères guident.
+    val position = estimate?.takeIf { it.usable }?.let { e ->
+        Location("fusion").apply {
+            latitude = e.latitude
+            longitude = e.longitude
+            accuracy = e.accuracy
+        }
+    }
     val distance = if (target != null && position != null) position.distanceTo(target) else null
     val bearing = if (target != null && position != null) position.bearingTo(target) else null
     val compass = heading
@@ -230,31 +247,14 @@ fun GuideScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
             )
         }
-        Spacer(Modifier.height(8.dp))
-        when {
-            !spot.hasCoordinates -> Pill(
-                text = stringResource(R.string.guide_conf_landmarks),
-                background = Smc.WarnSoft,
-                color = Smc.OnWarnSoft,
-                dot = Smc.WarnBright,
-            )
-            uncertainty == null -> Pill(
-                text = stringResource(if (hasPermission) R.string.guide_locating else R.string.guide_need_location),
-                background = Smc.WarnSoft,
-                color = Smc.OnWarnSoft,
-                dot = Smc.WarnBright,
-            )
-            reliable -> Pill(
+        // Pas de messages techniques (recherche, GPS, précision estimée) : seulement une bonne nouvelle.
+        if (reliable && !arrived) {
+            Spacer(Modifier.height(8.dp))
+            Pill(
                 text = stringResource(R.string.guide_conf_high),
                 background = Smc.SuccessSoft,
                 color = Smc.OnSuccessSoft,
                 dot = Smc.Success,
-            )
-            else -> Pill(
-                text = stringResource(R.string.guide_conf_est, uncertainty.roundToInt()),
-                background = Smc.WarnSoft,
-                color = Smc.OnWarnSoft,
-                dot = Smc.WarnBright,
             )
         }
 
@@ -273,15 +273,17 @@ fun GuideScreen(
             }
         }
 
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = distance?.let { (if (reliable) "" else "≈ ") + formatDistance(it) } ?: "—",
-            color = Smc.Text,
-            fontFamily = Jakarta,
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 44.sp,
-            lineHeight = 48.sp,
-        )
+        if (distance != null) {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = formatDistance(distance),
+                color = Smc.Text,
+                fontFamily = Jakarta,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 44.sp,
+                lineHeight = 48.sp,
+            )
+        }
         Text(
             text = guideStatus(spot, hasPermission, position, bearing, arrived, compass != null),
             color = Smc.Muted,
@@ -299,16 +301,6 @@ fun GuideScreen(
             )
         }
 
-        // Sans GPS, la distance continue de baisser grâce aux pas.
-        if (fromSteps && !arrived) {
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = stringResource(R.string.guide_steps_active),
-                color = Smc.Dim,
-                fontSize = 13.sp,
-                textAlign = TextAlign.Center,
-            )
-        }
         if (spot.hasCoordinates && hasPermission && stepsAvailable && !stepsGranted) {
             Spacer(Modifier.height(14.dp))
             GhostButton(
@@ -568,9 +560,9 @@ private fun guideStatus(
     arrived: Boolean,
     hasCompass: Boolean,
 ): String = when {
-    !spot.hasCoordinates -> stringResource(R.string.guide_no_gps)
+    !spot.hasCoordinates -> stringResource(R.string.guide_follow_landmarks)
     !hasPermission -> stringResource(R.string.guide_need_location)
-    position == null || bearing == null -> stringResource(R.string.guide_locating)
+    position == null || bearing == null -> stringResource(R.string.guide_follow_landmarks)
     arrived -> stringResource(R.string.guide_arrived)
     hasCompass -> stringResource(R.string.guide_follow_steps)
     else -> stringResource(R.string.guide_direction_no_compass, stringResource(DIRECTIONS[Guidance.octant(bearing)]))

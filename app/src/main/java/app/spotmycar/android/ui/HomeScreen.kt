@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -50,6 +51,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.spotmycar.android.R
@@ -71,6 +73,11 @@ private const val PRECISE_ACCURACY_METERS = 60f
 /** Les deux grands titres de l'accueil : ce sont des noms de marque, non traduits. */
 private const val PARK_TITLE = "PARK\nMY CAR"
 private const val FIND_TITLE = "FIND\nMY CAR"
+
+/** Tailles des boutons ronds : normale, en avant (action principale), discrète. */
+private val NORMAL_BUTTON = 188.dp
+private val BIG_BUTTON = 228.dp
+private val SMALL_BUTTON = 128.dp
 
 /**
  * Accueil (prototype v2) : deux grandes cartes, « Park my car » et « Find my car ».
@@ -145,65 +152,79 @@ fun HomeScreen(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        Spacer(Modifier.height(18.dp))
-        ActionCard(
-            title = PARK_TITLE,
-            subtitle = stringResource(R.string.home_park_sub),
-            look = if (spot == null) ParkPrimary else ParkQuiet,
-            badge = null,
-            onClick = { if (spot != null) confirmReplace = true else startPark() },
-        )
+        // Voiture enregistrée : « Find my car » passe en premier, en grand ; « Park » devient discret.
+        val parkBlock: @Composable ColumnScope.() -> Unit = {
+            ActionCard(
+                title = PARK_TITLE,
+                subtitle = stringResource(R.string.home_park_sub),
+                look = if (spot == null) ParkPrimary else ParkQuiet,
+                badge = null,
+                size = if (spot != null) SMALL_BUTTON else NORMAL_BUTTON,
+                onClick = { if (spot != null) confirmReplace = true else startPark() },
+            )
 
-        Spacer(Modifier.height(6.dp))
-        if (autoSaveReady) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_bolt),
-                    contentDescription = null,
-                    tint = Smc.Success,
-                    modifier = Modifier.size(16.dp),
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(text = stringResource(R.string.home_auto_on), color = Smc.Muted, fontSize = 12.sp)
-            }
-        } else {
-            TextButton(onClick = onOpenSettings, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_bolt),
-                    contentDescription = null,
-                    tint = Smc.Blue,
-                    modifier = Modifier.size(16.dp),
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    text = stringResource(R.string.home_auto_off),
-                    color = Smc.Blue,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
+            Spacer(Modifier.height(6.dp))
+            if (autoSaveReady) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_bolt),
+                        contentDescription = null,
+                        tint = Smc.Success,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(text = stringResource(R.string.home_auto_on), color = Smc.Muted, fontSize = 12.sp)
+                }
+            } else {
+                TextButton(onClick = onOpenSettings, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_bolt),
+                        contentDescription = null,
+                        tint = Smc.Blue,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = stringResource(R.string.home_auto_off),
+                        color = Smc.Blue,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
             }
         }
-
-        Spacer(Modifier.height(6.dp))
-        ActionCard(
-            title = FIND_TITLE,
-            subtitle = stringResource(R.string.home_find_sub),
-            look = if (spot != null) FindPrimary else FindQuiet,
-            badge = if (spot != null) stringResource(R.string.home_saved_title) else null,
-            onClick = {
-                if (spot != null) {
-                    onFind()
-                } else {
-                    Toast.makeText(context, R.string.home_no_car, Toast.LENGTH_SHORT).show()
-                }
-            },
-        )
+        val findBlock: @Composable ColumnScope.() -> Unit = {
+            ActionCard(
+                title = FIND_TITLE,
+                subtitle = stringResource(R.string.home_find_sub),
+                look = if (spot != null) FindPrimary else FindQuiet,
+                badge = if (spot != null) stringResource(R.string.home_saved_title) else null,
+                size = if (spot != null) BIG_BUTTON else NORMAL_BUTTON,
+                onClick = {
+                    if (spot != null) {
+                        onFind()
+                    } else {
+                        Toast.makeText(context, R.string.home_no_car, Toast.LENGTH_SHORT).show()
+                    }
+                },
+            )
+        }
+        Spacer(Modifier.height(18.dp))
+        if (spot != null) {
+            findBlock()
+            Spacer(Modifier.height(22.dp))
+            parkBlock()
+        } else {
+            parkBlock()
+            Spacer(Modifier.height(6.dp))
+            findBlock()
+        }
 
         if (spot != null) {
             Spacer(Modifier.height(18.dp))
@@ -216,7 +237,36 @@ fun HomeScreen(
                 onShare = onShare,
             )
         }
-        // Les places précédentes ne sont plus ici : elles vivent dans l'onglet Historique.
+        // Sur l'accueil, seulement le dernier stationnement ; tous les autres sont dans l'onglet Historique.
+        val last = history.firstOrNull()
+        if (spot == null && last != null) {
+            Spacer(Modifier.height(18.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.home_last_parking),
+                    color = Smc.Text,
+                    fontFamily = Jakarta,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                if (history.size > 1) {
+                    TextButton(onClick = onOpenHistory) {
+                        Text(
+                            text = stringResource(R.string.home_see_all),
+                            color = Smc.Blue,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+            HistoryRow(past = last, compact = true)
+        }
     }
 
     if (confirmReplace) {
@@ -307,14 +357,17 @@ private fun ActionCard(
     subtitle: String,
     look: CardLook,
     badge: String?,
+    size: Dp = NORMAL_BUTTON,
     onClick: () -> Unit,
 ) {
+    // Les textes et l'icône suivent la taille du bouton.
+    val scale = size / NORMAL_BUTTON
     val glow = look.glow
     val brush = look.brush
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
-                .size(188.dp)
+                .size(size)
                 .then(
                     if (glow != null) {
                         Modifier.shadow(12.dp, CircleShape, clip = false, ambientColor = glow, spotColor = glow)
@@ -343,7 +396,7 @@ private fun ActionCard(
                     painter = painterResource(R.drawable.ic_car),
                     contentDescription = null,
                     tint = look.icon,
-                    modifier = Modifier.size(36.dp),
+                    modifier = Modifier.size(36.dp * scale),
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
@@ -351,8 +404,8 @@ private fun ActionCard(
                     color = look.title,
                     fontFamily = Jakarta,
                     fontWeight = FontWeight.ExtraBold,
-                    fontSize = 20.sp,
-                    lineHeight = 23.sp,
+                    fontSize = 20.sp * scale,
+                    lineHeight = 23.sp * scale,
                     textAlign = TextAlign.Center,
                 )
             }

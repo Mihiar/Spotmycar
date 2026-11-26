@@ -36,6 +36,9 @@ jobs:
       - name: Préparer Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Tests automatiques (logique de guidage)
+        run: ./gradlew --no-daemon --stacktrace testDebugUnitTest
+
       - name: Compiler l'APK de test
         run: ./gradlew --no-daemon --stacktrace assembleDebug
 
