@@ -56,6 +56,12 @@ class AppSettings(context: Context) {
         get() = prefs.getInt(K_FREE_MIN, 18 * 60)
         set(value) = prefs.edit().putInt(K_FREE_MIN, value).apply()
 
+    // ── Guidage ─────────────────────────────────────────────────────────────
+    /** Longueur du pas de l'utilisateur, mesurée avec le GPS (0,7 m avant la première mesure). */
+    var strideMeters: Float
+        get() = prefs.getFloat(K_STRIDE, 0.7f)
+        set(value) = prefs.edit().putFloat(K_STRIDE, value).apply()
+
     private companion object {
         const val K_AUTO_SAVE = "auto_save_enabled"
         const val K_CAR_ADDRESS = "car_address"
@@ -67,5 +73,6 @@ class AppSettings(context: Context) {
         const val K_MAX_HOURS = "alert_max_hours"
         const val K_FREE_ON = "alert_free"
         const val K_FREE_MIN = "alert_free_minutes"
+        const val K_STRIDE = "guide_stride_meters"
     }
 }

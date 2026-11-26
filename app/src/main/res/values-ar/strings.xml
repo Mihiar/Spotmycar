@@ -255,6 +255,8 @@
     <string name="guide_floor_car">طابق السيارة</string>
     <string name="guide_allow_steps">احسب خطواتي تحت الأرض</string>
     <string name="guide_steps_active">بدون GPS: المسافة مقدّرة من خطواتك</string>
+    <string name="guide_approximate">الموقع تقريبي: واصل المشي وسيصبح أدق</string>
+    <string name="guide_too_vague">الموقع غير دقيق هنا: اتبع العلامات أدناه</string>
     <string name="arrived_title">وجدتها!</string>
     <string name="arrived_body">سيارتك هنا.</string>
     <string name="arrived_new">تسجيل سيارة أخرى</string>

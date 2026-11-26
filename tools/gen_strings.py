@@ -275,6 +275,8 @@ S = [
  ("guide_floor_car", "Car level", "Niveau de la voiture", "طابق السيارة"),
  ("guide_allow_steps", "Count my steps underground", "Compter mes pas sous terre", "احسب خطواتي تحت الأرض"),
  ("guide_steps_active", "No GPS: distance estimated from your steps", "Sans GPS : distance estimée avec vos pas", "بدون GPS: المسافة مقدّرة من خطواتك"),
+ ("guide_approximate", "Approximate position: keep walking, it will get sharper", "Position approximative : marchez, elle va s'affiner", "الموقع تقريبي: واصل المشي وسيصبح أدق"),
+ ("guide_too_vague", "Position too vague here: follow the landmarks below", "Position trop vague ici : suivez les repères ci-dessous", "الموقع غير دقيق هنا: اتبع العلامات أدناه"),
  ("arrived_title", "Found!", "Trouvée !", "وجدتها!"),
  ("arrived_body", "Your car is here.", "Votre voiture est ici.", "سيارتك هنا."),
  ("arrived_new", "Save another car", "Enregistrer une autre voiture", "تسجيل سيارة أخرى"),

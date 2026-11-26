@@ -22,6 +22,7 @@ souterrain où le GPS ne passe pas, et qui aide à la retrouver.
 | Identifiant de l'app | `app.spotmycar.android` | Définitif une fois publié sur Google Play |
 | Android minimum | Android 8.0 (API 26) ; cible Android 16 (API 36) | API 36 est exigée par Google Play pour toute nouvelle app |
 | Podomètre | v1 : les pas font baisser la distance pendant le guidage quand le GPS ne passe plus (≈ 0,7 m par pas). v1.1 : enregistrer le trajet voiture → sortie et le refaire à l'envers | Décidé le 18 novembre 2026 : petit et sûr pour le lancement ; le trajet complet est la grande mise à jour suivante |
+| Ordre des sources pendant le guidage | Cascade du plus sûr au moins sûr : GPS précis (≤ 15 m) → pas depuis le dernier point sûr → position approximative (Wi-Fi, antennes) seulement si elle est plus précise et cohérente → dernière position connue (< 3 min) comme point de départ → au-delà de 60 m d'incertitude, les repères guident. Longueur du pas mesurée au GPS quand on marche dehors | Décidé le 26 novembre 2026 (`location/PositionFusion.kt`, testé par `PositionFusionTest`) |
 
 ## Principes du produit
 
@@ -85,7 +86,8 @@ app/src/main/java/app/spotmycar/android/
   alerts/AlertReceiver.kt      affiche l'alerte ; reprogramme après redémarrage
   notify/Notifier.kt           notifications
   util/Photos.kt, Actions.kt, SpotText.kt   photos ; cartes, partage ; petites phrases
-  location/StepCounter.kt      podomètre : un pas ≈ 0,7 m dans la direction de la boussole, sans GPS
+  location/StepCounter.kt      podomètre : signal à chaque pas (capteur du téléphone)
+  location/PositionFusion.kt   « où suis-je ? » : cascade GPS → pas → position approximative, longueur du pas mesurée
   location/Barometer.kt        baromètre : pression près de la voiture, écart de niveaux au retour
   location/Reliability.kt      score de fiabilité (0 à 100) et seuil du mode de secours
   ui/theme/Theme.kt            couleurs et police de la direction « clair bleu » (prototype v2)

@@ -7,29 +7,20 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.location.Location
 import android.os.Build
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlin.math.cos
-import kotlin.math.sin
 
 /**
  * Le podomètre du téléphone (le même capteur que celui des apps de santé),
  * lu directement : pas de compte Google, rien ne quitte le téléphone.
  *
  * Sert au guidage sous terre : quand le GPS ne passe plus, chaque pas fait
- * avancer la position estimée dans la direction de la boussole.
+ * avancer la position estimée (voir [PositionFusion]).
  */
 object StepCounter {
-    /** Longueur moyenne d'un pas d'adulte. Une estimation : elle varie selon la personne. */
-    const val STRIDE_METERS = 0.7f
-
-    /** Erreur ajoutée à chaque pas (longueur de pas et boussole imparfaites). */
-    const val DRIFT_PER_STEP_METERS = 0.15f
-
     fun isAvailable(context: Context): Boolean =
         context.getSystemService(SensorManager::class.java)
             ?.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR) != null
@@ -57,23 +48,5 @@ object StepCounter {
         }
         sensors.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_FASTEST)
         awaitClose { sensors.unregisterListener(listener) }
-    }
-
-    /**
-     * La position un pas plus loin, dans la direction [bearingDegrees] (0 = nord géographique).
-     * Son « accuracy » grandit à chaque pas : plus on marche sans GPS, moins on est sûr.
-     */
-    fun stepFrom(from: Location, bearingDegrees: Float): Location {
-        val radians = Math.toRadians(bearingDegrees.toDouble())
-        val north = STRIDE_METERS * cos(radians)
-        val east = STRIDE_METERS * sin(radians)
-        val metersPerDegreeLat = 111_320.0
-        val metersPerDegreeLng = (metersPerDegreeLat * cos(Math.toRadians(from.latitude))).coerceAtLeast(1.0)
-        return Location("steps").apply {
-            latitude = from.latitude + north / metersPerDegreeLat
-            longitude = from.longitude + east / metersPerDegreeLng
-            accuracy = from.accuracy + DRIFT_PER_STEP_METERS
-            time = System.currentTimeMillis()
-        }
     }
 }

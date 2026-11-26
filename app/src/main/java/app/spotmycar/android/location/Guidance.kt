@@ -9,6 +9,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.location.Location
 import android.os.Looper
+import android.os.SystemClock
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
@@ -17,6 +18,8 @@ import com.google.android.gms.location.Priority
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 import kotlin.math.abs
 
 /**
@@ -49,6 +52,35 @@ object Guidance {
         }
         awaitClose { client.removeLocationUpdates(callback) }
     }
+
+    /**
+     * Dernière position connue du téléphone (sans attendre le GPS), ou rien.
+     * Sert de point de départ quand on ouvre le guidage déjà sous terre.
+     */
+    @SuppressLint("MissingPermission")
+    suspend fun lastKnown(context: Context): Location? {
+        val appContext = context.applicationContext
+        if (!LocationFetcher.hasForegroundPermission(appContext)) return null
+        return suspendCancellableCoroutine { continuation ->
+            try {
+                LocationServices.getFusedLocationProviderClient(appContext).lastLocation
+                    .addOnSuccessListener { location -> if (continuation.isActive) continuation.resume(location) }
+                    .addOnFailureListener { if (continuation.isActive) continuation.resume(null) }
+            } catch (e: SecurityException) {
+                continuation.resume(null)
+            }
+        }
+    }
+
+    /** La position du téléphone, dans le format de [PositionFusion] (avec son âge). */
+    fun toFusionFix(location: Location): PositionFusion.Fix = PositionFusion.Fix(
+        latitude = location.latitude,
+        longitude = location.longitude,
+        // Sans précision annoncée, on la considère comme vague.
+        accuracy = if (location.hasAccuracy()) location.accuracy else PositionFusion.MAX_USABLE_METERS,
+        ageMillis = ((SystemClock.elapsedRealtimeNanos() - location.elapsedRealtimeNanos) / 1_000_000L)
+            .coerceAtLeast(0L),
+    )
 
     /**
      * Cap du téléphone en degrés par rapport au nord magnétique (0 = nord, 90 = est).
