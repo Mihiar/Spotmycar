@@ -50,7 +50,8 @@ souterrain où le GPS ne passe pas, et qui aide à la retrouver.
   « Plus tard » ; celles déjà réglées ne s'affichent pas.
 - **Refus définitif** : après deux refus, Android n'affiche plus sa fenêtre. L'app le détecte et le bouton ouvre
   alors directement les paramètres de l'app (mise en route, Réglages, guidage, alertes).
-- **Accueil** (onglet) : deux grands boutons **ronds**, « Park my car » et « Find my car ». Avec une voiture
+- **Accueil** (onglet) : deux grands boutons **ronds**, « Park my car » et « Find my car ». Voiture enregistrée :
+  « Find my car » passe **en premier et en grand**, « Park my car » devient petit et discret (26 nov. 2026). Avec une voiture
   enregistrée : ses repères, sa fiabilité, la photo, « Modifier la place » et le partage. Les places précédentes
   ne sont plus sur l'accueil : elles sont dans l'Historique. Seule exception (26 nov. 2026) : quand aucune
   voiture n'est enregistrée, l'accueil montre le **dernier stationnement** (une seule ligne) ; tous les autres sont dans l'Historique.
